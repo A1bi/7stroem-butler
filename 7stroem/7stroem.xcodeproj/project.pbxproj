@@ -1,0 +1,268 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 45;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		615C6D0312E4C516002AA2A0 /* httprequest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 615C6D0212E4C516002AA2A0 /* httprequest.cpp */; };
+		615C6D0612E4C5D2002AA2A0 /* httpresponse.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 615C6D0512E4C5D2002AA2A0 /* httpresponse.cpp */; };
+		6165A55F12FDA16200B0D734 /* json.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6165A55E12FDA16200B0D734 /* json.cpp */; };
+		6183BED112D38A4700D42893 /* http.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6183BED012D38A4700D42893 /* http.cpp */; };
+		61AC2ED212D1DE840089E48E /* game.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 61AC2ED112D1DE840089E48E /* game.cpp */; };
+		61AC2ED412D1DF0C0089E48E /* player.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 61AC2ED312D1DF0C0089E48E /* player.cpp */; };
+		61AC2ED612D1DF540089E48E /* card.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 61AC2ED512D1DF540089E48E /* card.cpp */; };
+		61AC2EF912D1E7200089E48E /* socket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 61AC2EF812D1E7200089E48E /* socket.cpp */; };
+		8DD76F650486A84900D96B5E /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08FB7796FE84155DC02AAC07 /* main.cpp */; settings = {ATTRIBUTES = (); }; };
+		8DD76F6A0486A84900D96B5E /* eifelpoker.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = C6859E8B029090EE04C91782 /* eifelpoker.1 */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		8DD76F690486A84900D96B5E /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 8;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+				8DD76F6A0486A84900D96B5E /* eifelpoker.1 in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		08FB7796FE84155DC02AAC07 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		615C6D0112E4C516002AA2A0 /* httprequest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = httprequest.h; sourceTree = "<group>"; };
+		615C6D0212E4C516002AA2A0 /* httprequest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = httprequest.cpp; sourceTree = "<group>"; };
+		615C6D0412E4C5D2002AA2A0 /* httpresponse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = httpresponse.h; sourceTree = "<group>"; };
+		615C6D0512E4C5D2002AA2A0 /* httpresponse.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = httpresponse.cpp; sourceTree = "<group>"; };
+		6165A55D12FDA16200B0D734 /* json.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = json.h; sourceTree = "<group>"; };
+		6165A55E12FDA16200B0D734 /* json.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = json.cpp; sourceTree = "<group>"; };
+		6182FF5612BC09790051FD81 /* card.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = card.h; sourceTree = "<group>"; };
+		6183BECF12D38A4700D42893 /* http.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = http.h; sourceTree = "<group>"; };
+		6183BED012D38A4700D42893 /* http.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = http.cpp; sourceTree = "<group>"; };
+		61AC2ED112D1DE840089E48E /* game.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = game.cpp; sourceTree = "<group>"; };
+		61AC2ED312D1DF0C0089E48E /* player.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = player.cpp; sourceTree = "<group>"; };
+		61AC2ED512D1DF540089E48E /* card.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = card.cpp; sourceTree = "<group>"; };
+		61AC2EF712D1E7200089E48E /* socket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = socket.h; sourceTree = "<group>"; };
+		61AC2EF812D1E7200089E48E /* socket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = socket.cpp; sourceTree = "<group>"; };
+		61EDAFD412B94154003A1229 /* handlegames.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = handlegames.h; sourceTree = "<group>"; };
+		61EDAFD812B9478A003A1229 /* game.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = game.h; sourceTree = "<group>"; };
+		61EDAFDB12B94952003A1229 /* player.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = player.h; sourceTree = "<group>"; };
+		8DD76F6C0486A84900D96B5E /* 7stroem */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = 7stroem; sourceTree = BUILT_PRODUCTS_DIR; };
+		C6859E8B029090EE04C91782 /* eifelpoker.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = eifelpoker.1; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		8DD76F660486A84900D96B5E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		08FB7794FE84155DC02AAC07 /* eifelpoker */ = {
+			isa = PBXGroup;
+			children = (
+				08FB7795FE84155DC02AAC07 /* Source */,
+				C6859E8C029090F304C91782 /* Documentation */,
+				1AB674ADFE9D54B511CA2CBB /* Products */,
+			);
+			name = eifelpoker;
+			sourceTree = "<group>";
+		};
+		08FB7795FE84155DC02AAC07 /* Source */ = {
+			isa = PBXGroup;
+			children = (
+				610A821512E3B0D3001FC770 /* network */,
+				08FB7796FE84155DC02AAC07 /* main.cpp */,
+				61EDAFD412B94154003A1229 /* handlegames.h */,
+				61EDAFD812B9478A003A1229 /* game.h */,
+				61EDAFDB12B94952003A1229 /* player.h */,
+				6182FF5612BC09790051FD81 /* card.h */,
+				61AC2ED112D1DE840089E48E /* game.cpp */,
+				61AC2ED312D1DF0C0089E48E /* player.cpp */,
+				61AC2ED512D1DF540089E48E /* card.cpp */,
+				6165A55D12FDA16200B0D734 /* json.h */,
+				6165A55E12FDA16200B0D734 /* json.cpp */,
+			);
+			name = Source;
+			sourceTree = "<group>";
+		};
+		1AB674ADFE9D54B511CA2CBB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8DD76F6C0486A84900D96B5E /* 7stroem */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		610A821512E3B0D3001FC770 /* network */ = {
+			isa = PBXGroup;
+			children = (
+				61AC2EF812D1E7200089E48E /* socket.cpp */,
+				61AC2EF712D1E7200089E48E /* socket.h */,
+				6183BED012D38A4700D42893 /* http.cpp */,
+				6183BECF12D38A4700D42893 /* http.h */,
+				615C6D0112E4C516002AA2A0 /* httprequest.h */,
+				615C6D0212E4C516002AA2A0 /* httprequest.cpp */,
+				615C6D0412E4C5D2002AA2A0 /* httpresponse.h */,
+				615C6D0512E4C5D2002AA2A0 /* httpresponse.cpp */,
+			);
+			name = network;
+			sourceTree = "<group>";
+		};
+		C6859E8C029090F304C91782 /* Documentation */ = {
+			isa = PBXGroup;
+			children = (
+				C6859E8B029090EE04C91782 /* eifelpoker.1 */,
+			);
+			name = Documentation;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		8DD76F620486A84900D96B5E /* 7stroem */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1DEB923108733DC60010E9CD /* Build configuration list for PBXNativeTarget "7stroem" */;
+			buildPhases = (
+				8DD76F640486A84900D96B5E /* Sources */,
+				8DD76F660486A84900D96B5E /* Frameworks */,
+				8DD76F690486A84900D96B5E /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = 7stroem;
+			productInstallPath = "$(HOME)/bin";
+			productName = eifelpoker;
+			productReference = 8DD76F6C0486A84900D96B5E /* 7stroem */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		08FB7793FE84155DC02AAC07 /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = 1DEB923508733DC60010E9CD /* Build configuration list for PBXProject "7stroem" */;
+			compatibilityVersion = "Xcode 3.1";
+			developmentRegion = English;
+			hasScannedForEncodings = 1;
+			knownRegions = (
+				English,
+				Japanese,
+				French,
+				German,
+			);
+			mainGroup = 08FB7794FE84155DC02AAC07 /* eifelpoker */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				8DD76F620486A84900D96B5E /* 7stroem */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		8DD76F640486A84900D96B5E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8DD76F650486A84900D96B5E /* main.cpp in Sources */,
+				61AC2ED212D1DE840089E48E /* game.cpp in Sources */,
+				61AC2ED412D1DF0C0089E48E /* player.cpp in Sources */,
+				61AC2ED612D1DF540089E48E /* card.cpp in Sources */,
+				61AC2EF912D1E7200089E48E /* socket.cpp in Sources */,
+				6183BED112D38A4700D42893 /* http.cpp in Sources */,
+				615C6D0312E4C516002AA2A0 /* httprequest.cpp in Sources */,
+				615C6D0612E4C5D2002AA2A0 /* httpresponse.cpp in Sources */,
+				6165A55F12FDA16200B0D734 /* json.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		1DEB923208733DC60010E9CD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				INSTALL_PATH = /usr/local/bin;
+				PRODUCT_NAME = 7stroem;
+			};
+			name = Debug;
+		};
+		1DEB923308733DC60010E9CD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = /usr/local/bin;
+				PRODUCT_NAME = 7stroem;
+			};
+			name = Release;
+		};
+		1DEB923608733DC60010E9CD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PREBINDING = NO;
+				SDKROOT = macosx10.6;
+			};
+			name = Debug;
+		};
+		1DEB923708733DC60010E9CD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				PREBINDING = NO;
+				SDKROOT = macosx10.6;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1DEB923108733DC60010E9CD /* Build configuration list for PBXNativeTarget "7stroem" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1DEB923208733DC60010E9CD /* Debug */,
+				1DEB923308733DC60010E9CD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		1DEB923508733DC60010E9CD /* Build configuration list for PBXProject "7stroem" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1DEB923608733DC60010E9CD /* Debug */,
+				1DEB923708733DC60010E9CD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 08FB7793FE84155DC02AAC07 /* Project object */;
+}

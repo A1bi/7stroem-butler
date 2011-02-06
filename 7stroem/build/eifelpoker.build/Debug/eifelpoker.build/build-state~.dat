@@ -1,0 +1,72 @@
+Teifelpoker
+v7
+r0
+t314385825.632489
+cCheck dependencies
+cCompileC build/eifelpoker.build/Debug/eifelpoker.build/Objects-normal/x86_64/main.o /Users/albi/Documents/eifelpoker/main.cpp normal x86_64 c++ com.apple.compilers.gcc.4_2
+
+N/Developer/SDKs/MacOSX10.6.sdk
+c000000004C5342BA00000000000000EE
+t1280524986
+s238
+
+N/Users/albi/Documents/eifelpoker/build/Debug/eifelpoker
+t2
+s0
+
+N/Users/albi/Documents/eifelpoker/build/eifelpoker.build/Debug/eifelpoker.build/Objects-normal/x86_64/eifelpoker.LinkFileList
+c000000004D0CEE21000000000000006C
+t1292693025
+s108
+
+N/Users/albi/Documents/eifelpoker/build/eifelpoker.build/Debug/eifelpoker.build/Objects-normal/x86_64/main.o
+t2
+s0
+
+N/Users/albi/Documents/eifelpoker/game.h
+c000000004D0CEE010000000000001627
+t1292692993
+s5671
+i<iostream>
+i<string>
+i<map>
+i<vector>
+i<player.h>
+
+N/Users/albi/Documents/eifelpoker/main.cpp
+c000000004D0CEE1900000000000000A6
+t1292693017
+s166
+i<iostream>
+i<string>
+i<game.h>
+
+N/Users/albi/Documents/eifelpoker/player.h
+c000000004D0C80DF0000000000000990
+t1292665055
+s2448
+i<iostream>
+i<vector>
+i<set>
+i<string>
+
+CCheck dependencies
+r0
+lSLF07#2@18"Check dependencies314385825#314385825#0(0"0(0#1#0"8615709280#0"0#
+
+CCompileC build/eifelpoker.build/Debug/eifelpoker.build/Objects-normal/x86_64/main.o /Users/albi/Documents/eifelpoker/main.cpp normal x86_64 c++ com.apple.compilers.gcc.4_2
+s314385825.631576
+e314385825.632454
+r0
+xCompileC
+xbuild/eifelpoker.build/Debug/eifelpoker.build/Objects-normal/x86_64/main.o
+x/Users/albi/Documents/eifelpoker/main.cpp
+xnormal
+xx86_64
+xc++
+xcom.apple.compilers.gcc.4_2
+lSLF07#2@49"Compile /Users/albi/Documents/eifelpoker/main.cpp314385825#314385825#0(526"/Users/albi/Documents/eifelpoker/main.cpp:3:18: error: game.h: No such file or directory/Users/albi/Documents/eifelpoker/main.cpp: In function 'int main(int, char* const*)':/Users/albi/Documents/eifelpoker/main.cpp:8: error: 'Game' was not declared in this scope/Users/albi/Documents/eifelpoker/main.cpp:8: error: 'myGame' was not declared in this scope/Users/albi/Documents/eifelpoker/main.cpp:8: error: expected type-specifier before 'Game'/Users/albi/Documents/eifelpoker/main.cpp:8: error: expected `;' before 'Game'5(4@33"Game.h: No such file or directory314385825#0#89#0(6@41"/Users/albi/Documents/eifelpoker/main.cpp314385817#3#0#3#0#28"*: No such file or directory0(4@37"'Game' was not declared in this scope314385825#175#90#0(6@41"/Users/albi/Documents/eifelpoker/main.cpp314385817#8#0#8#0#34"'*' was not declared in this scope0(4@39"'myGame' was not declared in this scope314385825#265#92#0(6@41"/Users/albi/Documents/eifelpoker/main.cpp314385817#8#0#8#0#34"'*' was not declared in this scope0(4@37"Expected type-specifier before 'Game'314385825#357#90#0(6@41"/Users/albi/Documents/eifelpoker/main.cpp314385817#8#0#8#0#19"expected * before *0(4@26"Expected `;' before 'Game'314385825#447#79#0(6@41"/Users/albi/Documents/eifelpoker/main.cpp314385817#8#0#8#0#19"expected * before *0(0#0#41"/Users/albi/Documents/eifelpoker/main.cpp8616077152#1279"    cd /Users/albi/Documents/eifelpoker    setenv LANG en_US.US-ASCII    /Developer/usr/bin/gcc-4.2 -x c++ -arch x86_64 -fmessage-length=0 -pipe -Wno-trigraphs -fpascal-strings -fasm-blocks -O0 -Wreturn-type -Wunused-variable -isysroot /Developer/SDKs/MacOSX10.6.sdk -mfix-and-continue -fvisibility-inlines-hidden -mmacosx-version-min=10.6 -gdwarf-2 -iquote /Users/albi/Documents/eifelpoker/build/eifelpoker.build/Debug/eifelpoker.build/eifelpoker-generated-files.hmap -I/Users/albi/Documents/eifelpoker/build/eifelpoker.build/Debug/eifelpoker.build/eifelpoker-own-target-headers.hmap -I/Users/albi/Documents/eifelpoker/build/eifelpoker.build/Debug/eifelpoker.build/eifelpoker-all-target-headers.hmap -iquote /Users/albi/Documents/eifelpoker/build/eifelpoker.build/Debug/eifelpoker.build/eifelpoker-project-headers.hmap -F/Users/albi/Documents/eifelpoker/build/Debug -I/Users/albi/Documents/eifelpoker/build/Debug/include -I/Users/albi/Documents/eifelpoker/build/eifelpoker.build/Debug/eifelpoker.build/DerivedSources/x86_64 -I/Users/albi/Documents/eifelpoker/build/eifelpoker.build/Debug/eifelpoker.build/DerivedSources -c /Users/albi/Documents/eifelpoker/main.cpp -o /Users/albi/Documents/eifelpoker/build/eifelpoker.build/Debug/eifelpoker.build/Objects-normal/x86_64/main.o1#
+
+CLd /Users/albi/Documents/eifelpoker/build/Debug/eifelpoker normal x86_64
+r0
+

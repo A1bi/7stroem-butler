@@ -1,0 +1,10 @@
+000000000070e65d0000000000000668 99d55eeb2f366c43cfc0e411a9ce0a52 ffffffffffffffffffffffffffffffff 163488 /Users/albi/Documents/eifelpoker/build/eifelpoker.build/Debug/eifelpoker.build/Objects-normal/x86_64/httpresponse.o
+000000004bb7df6700000000000047e5 ffc1dfdf0470474cd0a8f8bb16218b9a ffffffffffffffffffffffffffffffff 228412 /Users/albi/Documents/eifelpoker/build/eifelpoker.build/Debug/eifelpoker.build/Objects-normal/x86_64/httprequest.o
+000000004bb257200000000000005a4d 1ebef35c45d6daf7473c857aa7e457b7 ffffffffffffffffffffffffffffffff 205812 /Users/albi/Documents/eifelpoker/build/eifelpoker.build/Debug/eifelpoker.build/Objects-normal/x86_64/http.o
+00000000068867f30000000000005a77 c372653916566c4c1613ab9d1dddc442 ffffffffffffffffffffffffffffffff 42532 /Users/albi/Documents/eifelpoker/build/eifelpoker.build/Debug/eifelpoker.build/Objects-normal/x86_64/socket.o
+000000004d21aaa70000000000000292 9c64a7dd32228fbc3d879656251bdbc2 ffffffffffffffffffffffffffffffff 73800 /Users/albi/Documents/eifelpoker/build/eifelpoker.build/Debug/eifelpoker.build/Objects-normal/x86_64/card.o
+000000004d21aa310000000000000b40 c39e5a5c34435efc355a129596d79fc1 ffffffffffffffffffffffffffffffff 131236 /Users/albi/Documents/eifelpoker/build/eifelpoker.build/Debug/eifelpoker.build/Objects-normal/x86_64/player.o
+000000004d3dd15c0000000000001831 421229aa2a51487ff8a4190338bc19a1 ffffffffffffffffffffffffffffffff 371004 /Users/albi/Documents/eifelpoker/build/eifelpoker.build/Debug/eifelpoker.build/Objects-normal/x86_64/game.o
+000000004d25aba40000000000000cb2 c33caae5ba1e94c6ff564bb78d8a91f9 ffffffffffffffffffffffffffffffff 398948 /Users/albi/Documents/eifelpoker/build/eifelpoker.build/Debug/eifelpoker.build/Objects-normal/x86_64/main.o
+650c699fe97f0b434168e43a032c8303 dffb7eb5e01bcab67859a0f3f30b1625 ffffffffffffffffffffffffffffffff 275768 /Users/albi/Documents/eifelpoker/build/Debug/eifelpoker
+ffffffffffffffffffffffffffffffff ffffffffffffffffffffffffffffffff ffffffffffffffffffffffffffffffff 0 /Users/albi/Documents/eifelpoker/build/eifelpoker.build/Debug/eifelpoker.build/Objects-normal/x86_64/httpsocket.o

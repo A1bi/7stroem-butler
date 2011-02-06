@@ -1,0 +1,373 @@
+T7stroem
+v7
+r0
+t318714945.662563
+cCheck dependencies
+cCompileC build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/main.o /Users/albi/Dev/7stroem/main.cpp normal x86_64 c++ com.apple.compilers.gcc.4_2
+cCompileC build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/game.o /Users/albi/Dev/7stroem/game.cpp normal x86_64 c++ com.apple.compilers.gcc.4_2
+cCompileC build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/player.o /Users/albi/Dev/7stroem/player.cpp normal x86_64 c++ com.apple.compilers.gcc.4_2
+cCompileC build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/card.o /Users/albi/Dev/7stroem/card.cpp normal x86_64 c++ com.apple.compilers.gcc.4_2
+cCompileC build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/socket.o /Users/albi/Dev/7stroem/socket.cpp normal x86_64 c++ com.apple.compilers.gcc.4_2
+cCompileC build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/http.o /Users/albi/Dev/7stroem/http.cpp normal x86_64 c++ com.apple.compilers.gcc.4_2
+cCompileC build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/httprequest.o /Users/albi/Dev/7stroem/httprequest.cpp normal x86_64 c++ com.apple.compilers.gcc.4_2
+cCompileC build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/httpresponse.o /Users/albi/Dev/7stroem/httpresponse.cpp normal x86_64 c++ com.apple.compilers.gcc.4_2
+cCompileC build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/json.o /Users/albi/Dev/7stroem/json.cpp normal x86_64 c++ com.apple.compilers.gcc.4_2
+cLd /Users/albi/Dev/7stroem/build/Debug/7stroem normal x86_64
+
+N/Developer/SDKs/MacOSX10.6.sdk
+c000000004C5342BA00000000000000EE
+t1280524986
+s238
+
+N/Developer/SDKs/MacOSX10.6.sdk/usr/include/arpa/inet.h
+c000000004AC598620000000000001533
+t1254463586
+s5427
+
+N/Developer/SDKs/MacOSX10.6.sdk/usr/include/netdb.h
+c000000004AC598B10000000000003057
+t1254463665
+s12375
+
+N/Developer/SDKs/MacOSX10.6.sdk/usr/include/netinet/in.h
+c000000004C4DE4AE000000000000539D
+t1280173230
+s21405
+
+N/Developer/SDKs/MacOSX10.6.sdk/usr/include/sys/socket.h
+c000000004C4DE4B400000000000059BC
+t1280173236
+s22972
+
+N/Developer/SDKs/MacOSX10.6.sdk/usr/include/sys/types.h
+c000000004C4DE4B40000000000002905
+t1280173236
+s10501
+
+N/Developer/SDKs/MacOSX10.6.sdk/usr/include/unistd.h
+c000000004AC59C82000000000000563E
+t1254464642
+s22078
+
+N/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/7stroem.LinkFileList
+c000000004D4D72A90000000000000358
+t1296921257
+s856
+
+N/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/card.o
+t1296921258
+s73784
+
+N/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/game.o
+t1296921258
+s370988
+
+N/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/http.o
+t1296921258
+s205796
+
+N/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/httprequest.o
+t1296921259
+s228396
+
+N/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/httpresponse.o
+t1296921259
+s163472
+
+N/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/json.o
+t1297022117
+s154152
+
+N/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/main.o
+t1297022116
+s451092
+
+N/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/player.o
+t1296921258
+s131220
+
+N/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/socket.o
+t1296921258
+s42532
+
+N/Users/albi/Dev/7stroem/build/Debug/7stroem
+t1297022117
+s329592
+
+N/Users/albi/Dev/7stroem/card.cpp
+c000000004D21AAA70000000000000292
+t1294052007
+s658
+i<sstream>
+i"card.h"
+
+N/Users/albi/Dev/7stroem/card.h
+c000000004D21AA33000000000000016D
+t1294051891
+s365
+i<string>
+
+N/Users/albi/Dev/7stroem/game.cpp
+c000000004D21AAD60000000000001CB6
+t1294052054
+s7350
+i<string>
+i<map>
+i<vector>
+i"game.h"
+
+N/Users/albi/Dev/7stroem/game.h
+c000000004D21AA1700000000000007C2
+t1294051863
+s1986
+i<string>
+i<vector>
+i<map>
+i"player.h"
+i"card.h"
+
+N/Users/albi/Dev/7stroem/http.cpp
+c000000004D39E0ED000000000000080B
+t1295638765
+s2059
+i<iostream>
+i<sstream>
+i"http.h"
+
+N/Users/albi/Dev/7stroem/http.h
+c000000004D39E0ED00000000000001DB
+t1295638765
+s475
+i<string>
+i<map>
+i<vector>
+i"socket.h"
+
+N/Users/albi/Dev/7stroem/httprequest.cpp
+c000000004D4C91B600000000000015ED
+t1296863670
+s5613
+i<sstream>
+i<iostream>
+i"http.h"
+i"httprequest.h"
+
+N/Users/albi/Dev/7stroem/httprequest.h
+c000000004D4C908B0000000000000252
+t1296863371
+s594
+i<string>
+i<map>
+i"http.h"
+i"httpresponse.h"
+
+N/Users/albi/Dev/7stroem/httpresponse.cpp
+c000000004D4C8FCA0000000000000474
+t1296863178
+s1140
+i<sstream>
+i"http.h"
+i"httpresponse.h"
+i<iostream>
+
+N/Users/albi/Dev/7stroem/httpresponse.h
+c000000004D3C6997000000000000021C
+t1295804823
+s540
+i<string>
+i<sstream>
+i"http.h"
+
+N/Users/albi/Dev/7stroem/json.cpp
+c000000004D4EFC870000000000000FA0
+t1297022087
+s4000
+i"json.h"
+
+N/Users/albi/Dev/7stroem/json.h
+c000000004D4EF8CE0000000000000369
+t1297021134
+s873
+i<string>
+i<vector>
+
+N/Users/albi/Dev/7stroem/main.cpp
+c000000004D4EFD030000000000000AA1
+t1297022211
+s2721
+i<iostream>
+i<string>
+i<sstream>
+i"game.h"
+i"socket.h"
+i"httprequest.h"
+i"httpresponse.h"
+i"json.h"
+
+N/Users/albi/Dev/7stroem/player.cpp
+c000000004D3DD19F0000000000000968
+t1295896991
+s2408
+i<vector>
+i<set>
+i<string>
+i"player.h"
+
+N/Users/albi/Dev/7stroem/player.h
+c000000004D3DD19D0000000000000345
+t1295896989
+s837
+i<string>
+i<set>
+i"card.h"
+
+N/Users/albi/Dev/7stroem/socket.cpp
+c000000004D3A30D300000000000009EA
+t1295659219
+s2538
+i<cstdlib>
+i"socket.h"
+
+N/Users/albi/Dev/7stroem/socket.h
+c000000004D3A2FDF00000000000003E3
+t1295658975
+s995
+i<string>
+i<sys/types.h>
+i<sys/socket.h>
+i<netinet/in.h>
+i<netdb.h>
+i<arpa/inet.h>
+i<unistd.h>
+
+CCheck dependencies
+r0
+lSLF07#2@18"Check dependencies318714945#318714945#0(0"0(0#1#0"8618074400#0"0#
+
+CCompileC build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/card.o /Users/albi/Dev/7stroem/card.cpp normal x86_64 c++ com.apple.compilers.gcc.4_2
+s318614058.098481
+e318614058.421526
+r1
+xCompileC
+xbuild/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/card.o
+x/Users/albi/Dev/7stroem/card.cpp
+xnormal
+xx86_64
+xc++
+xcom.apple.compilers.gcc.4_2
+lSLF07#2@40"Compile /Users/albi/Dev/7stroem/card.cpp318614058#318614058#0(0"0(0#0#32"/Users/albi/Dev/7stroem/card.cpp8614096032#1126"    cd /Users/albi/Dev/7stroem    setenv LANG en_US.US-ASCII    /Developer/usr/bin/gcc-4.2 -x c++ -arch x86_64 -fmessage-length=0 -pipe -Wno-trigraphs -fpascal-strings -fasm-blocks -O0 -Wreturn-type -Wunused-variable -isysroot /Developer/SDKs/MacOSX10.6.sdk -mfix-and-continue -fvisibility-inlines-hidden -mmacosx-version-min=10.6 -gdwarf-2 -iquote /Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-generated-files.hmap -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-own-target-headers.hmap -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-all-target-headers.hmap -iquote /Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-project-headers.hmap -F/Users/albi/Dev/7stroem/build/Debug -I/Users/albi/Dev/7stroem/build/Debug/include -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/DerivedSources/x86_64 -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/DerivedSources -c /Users/albi/Dev/7stroem/card.cpp -o /Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/card.o0#
+
+CCompileC build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/game.o /Users/albi/Dev/7stroem/game.cpp normal x86_64 c++ com.apple.compilers.gcc.4_2
+s318614057.349451
+e318614058.014602
+r1
+xCompileC
+xbuild/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/game.o
+x/Users/albi/Dev/7stroem/game.cpp
+xnormal
+xx86_64
+xc++
+xcom.apple.compilers.gcc.4_2
+lSLF07#2@40"Compile /Users/albi/Dev/7stroem/game.cpp318614057#318614058#0(0"0(0#0#32"/Users/albi/Dev/7stroem/game.cpp8613127200#1126"    cd /Users/albi/Dev/7stroem    setenv LANG en_US.US-ASCII    /Developer/usr/bin/gcc-4.2 -x c++ -arch x86_64 -fmessage-length=0 -pipe -Wno-trigraphs -fpascal-strings -fasm-blocks -O0 -Wreturn-type -Wunused-variable -isysroot /Developer/SDKs/MacOSX10.6.sdk -mfix-and-continue -fvisibility-inlines-hidden -mmacosx-version-min=10.6 -gdwarf-2 -iquote /Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-generated-files.hmap -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-own-target-headers.hmap -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-all-target-headers.hmap -iquote /Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-project-headers.hmap -F/Users/albi/Dev/7stroem/build/Debug -I/Users/albi/Dev/7stroem/build/Debug/include -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/DerivedSources/x86_64 -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/DerivedSources -c /Users/albi/Dev/7stroem/game.cpp -o /Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/game.o0#
+
+CCompileC build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/http.o /Users/albi/Dev/7stroem/http.cpp normal x86_64 c++ com.apple.compilers.gcc.4_2
+s318614058.421605
+e318614058.920026
+r1
+xCompileC
+xbuild/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/http.o
+x/Users/albi/Dev/7stroem/http.cpp
+xnormal
+xx86_64
+xc++
+xcom.apple.compilers.gcc.4_2
+lSLF07#2@40"Compile /Users/albi/Dev/7stroem/http.cpp318614058#318614058#0(0"0(0#0#32"/Users/albi/Dev/7stroem/http.cpp8613182432#1126"    cd /Users/albi/Dev/7stroem    setenv LANG en_US.US-ASCII    /Developer/usr/bin/gcc-4.2 -x c++ -arch x86_64 -fmessage-length=0 -pipe -Wno-trigraphs -fpascal-strings -fasm-blocks -O0 -Wreturn-type -Wunused-variable -isysroot /Developer/SDKs/MacOSX10.6.sdk -mfix-and-continue -fvisibility-inlines-hidden -mmacosx-version-min=10.6 -gdwarf-2 -iquote /Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-generated-files.hmap -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-own-target-headers.hmap -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-all-target-headers.hmap -iquote /Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-project-headers.hmap -F/Users/albi/Dev/7stroem/build/Debug -I/Users/albi/Dev/7stroem/build/Debug/include -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/DerivedSources/x86_64 -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/DerivedSources -c /Users/albi/Dev/7stroem/http.cpp -o /Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/http.o0#
+
+CCompileC build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/httprequest.o /Users/albi/Dev/7stroem/httprequest.cpp normal x86_64 c++ com.apple.compilers.gcc.4_2
+s318614058.547380
+e318614059.108148
+r1
+xCompileC
+xbuild/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/httprequest.o
+x/Users/albi/Dev/7stroem/httprequest.cpp
+xnormal
+xx86_64
+xc++
+xcom.apple.compilers.gcc.4_2
+lSLF07#2@47"Compile /Users/albi/Dev/7stroem/httprequest.cpp318614058#318614059#0(0"0(0#0#39"/Users/albi/Dev/7stroem/httprequest.cpp8615277888#1140"    cd /Users/albi/Dev/7stroem    setenv LANG en_US.US-ASCII    /Developer/usr/bin/gcc-4.2 -x c++ -arch x86_64 -fmessage-length=0 -pipe -Wno-trigraphs -fpascal-strings -fasm-blocks -O0 -Wreturn-type -Wunused-variable -isysroot /Developer/SDKs/MacOSX10.6.sdk -mfix-and-continue -fvisibility-inlines-hidden -mmacosx-version-min=10.6 -gdwarf-2 -iquote /Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-generated-files.hmap -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-own-target-headers.hmap -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-all-target-headers.hmap -iquote /Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-project-headers.hmap -F/Users/albi/Dev/7stroem/build/Debug -I/Users/albi/Dev/7stroem/build/Debug/include -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/DerivedSources/x86_64 -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/DerivedSources -c /Users/albi/Dev/7stroem/httprequest.cpp -o /Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/httprequest.o0#
+
+CCompileC build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/httpresponse.o /Users/albi/Dev/7stroem/httpresponse.cpp normal x86_64 c++ com.apple.compilers.gcc.4_2
+s318614058.920160
+e318614059.361648
+r1
+xCompileC
+xbuild/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/httpresponse.o
+x/Users/albi/Dev/7stroem/httpresponse.cpp
+xnormal
+xx86_64
+xc++
+xcom.apple.compilers.gcc.4_2
+lSLF07#2@48"Compile /Users/albi/Dev/7stroem/httpresponse.cpp318614058#318614059#0(0"0(0#0#40"/Users/albi/Dev/7stroem/httpresponse.cpp8612415104#1142"    cd /Users/albi/Dev/7stroem    setenv LANG en_US.US-ASCII    /Developer/usr/bin/gcc-4.2 -x c++ -arch x86_64 -fmessage-length=0 -pipe -Wno-trigraphs -fpascal-strings -fasm-blocks -O0 -Wreturn-type -Wunused-variable -isysroot /Developer/SDKs/MacOSX10.6.sdk -mfix-and-continue -fvisibility-inlines-hidden -mmacosx-version-min=10.6 -gdwarf-2 -iquote /Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-generated-files.hmap -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-own-target-headers.hmap -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-all-target-headers.hmap -iquote /Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-project-headers.hmap -F/Users/albi/Dev/7stroem/build/Debug -I/Users/albi/Dev/7stroem/build/Debug/include -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/DerivedSources/x86_64 -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/DerivedSources -c /Users/albi/Dev/7stroem/httpresponse.cpp -o /Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/httpresponse.o0#
+
+CCompileC build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/json.o /Users/albi/Dev/7stroem/json.cpp normal x86_64 c++ com.apple.compilers.gcc.4_2
+s318714916.799785
+e318714917.087271
+r1
+xCompileC
+xbuild/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/json.o
+x/Users/albi/Dev/7stroem/json.cpp
+xnormal
+xx86_64
+xc++
+xcom.apple.compilers.gcc.4_2
+lSLF07#2@40"Compile /Users/albi/Dev/7stroem/json.cpp318714916#318714917#0(0"0(0#0#32"/Users/albi/Dev/7stroem/json.cpp8616823616#1126"    cd /Users/albi/Dev/7stroem    setenv LANG en_US.US-ASCII    /Developer/usr/bin/gcc-4.2 -x c++ -arch x86_64 -fmessage-length=0 -pipe -Wno-trigraphs -fpascal-strings -fasm-blocks -O0 -Wreturn-type -Wunused-variable -isysroot /Developer/SDKs/MacOSX10.6.sdk -mfix-and-continue -fvisibility-inlines-hidden -mmacosx-version-min=10.6 -gdwarf-2 -iquote /Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-generated-files.hmap -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-own-target-headers.hmap -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-all-target-headers.hmap -iquote /Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-project-headers.hmap -F/Users/albi/Dev/7stroem/build/Debug -I/Users/albi/Dev/7stroem/build/Debug/include -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/DerivedSources/x86_64 -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/DerivedSources -c /Users/albi/Dev/7stroem/json.cpp -o /Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/json.o0#
+
+CCompileC build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/main.o /Users/albi/Dev/7stroem/main.cpp normal x86_64 c++ com.apple.compilers.gcc.4_2
+s318714916.139147
+e318714916.799358
+r1
+xCompileC
+xbuild/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/main.o
+x/Users/albi/Dev/7stroem/main.cpp
+xnormal
+xx86_64
+xc++
+xcom.apple.compilers.gcc.4_2
+lSLF07#2@40"Compile /Users/albi/Dev/7stroem/main.cpp318714916#318714916#0(0"0(0#0#32"/Users/albi/Dev/7stroem/main.cpp8616694912#1126"    cd /Users/albi/Dev/7stroem    setenv LANG en_US.US-ASCII    /Developer/usr/bin/gcc-4.2 -x c++ -arch x86_64 -fmessage-length=0 -pipe -Wno-trigraphs -fpascal-strings -fasm-blocks -O0 -Wreturn-type -Wunused-variable -isysroot /Developer/SDKs/MacOSX10.6.sdk -mfix-and-continue -fvisibility-inlines-hidden -mmacosx-version-min=10.6 -gdwarf-2 -iquote /Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-generated-files.hmap -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-own-target-headers.hmap -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-all-target-headers.hmap -iquote /Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-project-headers.hmap -F/Users/albi/Dev/7stroem/build/Debug -I/Users/albi/Dev/7stroem/build/Debug/include -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/DerivedSources/x86_64 -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/DerivedSources -c /Users/albi/Dev/7stroem/main.cpp -o /Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/main.o0#
+
+CCompileC build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/player.o /Users/albi/Dev/7stroem/player.cpp normal x86_64 c++ com.apple.compilers.gcc.4_2
+s318614058.014681
+e318614058.328728
+r1
+xCompileC
+xbuild/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/player.o
+x/Users/albi/Dev/7stroem/player.cpp
+xnormal
+xx86_64
+xc++
+xcom.apple.compilers.gcc.4_2
+lSLF07#2@42"Compile /Users/albi/Dev/7stroem/player.cpp318614058#318614058#0(0"0(0#0#34"/Users/albi/Dev/7stroem/player.cpp8614157568#1130"    cd /Users/albi/Dev/7stroem    setenv LANG en_US.US-ASCII    /Developer/usr/bin/gcc-4.2 -x c++ -arch x86_64 -fmessage-length=0 -pipe -Wno-trigraphs -fpascal-strings -fasm-blocks -O0 -Wreturn-type -Wunused-variable -isysroot /Developer/SDKs/MacOSX10.6.sdk -mfix-and-continue -fvisibility-inlines-hidden -mmacosx-version-min=10.6 -gdwarf-2 -iquote /Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-generated-files.hmap -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-own-target-headers.hmap -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-all-target-headers.hmap -iquote /Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-project-headers.hmap -F/Users/albi/Dev/7stroem/build/Debug -I/Users/albi/Dev/7stroem/build/Debug/include -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/DerivedSources/x86_64 -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/DerivedSources -c /Users/albi/Dev/7stroem/player.cpp -o /Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/player.o0#
+
+CCompileC build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/socket.o /Users/albi/Dev/7stroem/socket.cpp normal x86_64 c++ com.apple.compilers.gcc.4_2
+s318614058.328805
+e318614058.547300
+r1
+xCompileC
+xbuild/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/socket.o
+x/Users/albi/Dev/7stroem/socket.cpp
+xnormal
+xx86_64
+xc++
+xcom.apple.compilers.gcc.4_2
+lSLF07#2@42"Compile /Users/albi/Dev/7stroem/socket.cpp318614058#318614058#0(0"0(0#0#34"/Users/albi/Dev/7stroem/socket.cpp8614694304#1130"    cd /Users/albi/Dev/7stroem    setenv LANG en_US.US-ASCII    /Developer/usr/bin/gcc-4.2 -x c++ -arch x86_64 -fmessage-length=0 -pipe -Wno-trigraphs -fpascal-strings -fasm-blocks -O0 -Wreturn-type -Wunused-variable -isysroot /Developer/SDKs/MacOSX10.6.sdk -mfix-and-continue -fvisibility-inlines-hidden -mmacosx-version-min=10.6 -gdwarf-2 -iquote /Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-generated-files.hmap -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-own-target-headers.hmap -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-all-target-headers.hmap -iquote /Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/7stroem-project-headers.hmap -F/Users/albi/Dev/7stroem/build/Debug -I/Users/albi/Dev/7stroem/build/Debug/include -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/DerivedSources/x86_64 -I/Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/DerivedSources -c /Users/albi/Dev/7stroem/socket.cpp -o /Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/socket.o0#
+
+CLd /Users/albi/Dev/7stroem/build/Debug/7stroem normal x86_64
+s318714917.087345
+e318714917.123596
+r1
+xLd
+x/Users/albi/Dev/7stroem/build/Debug/7stroem
+xnormal
+xx86_64
+lSLF07#2@48"Link /Users/albi/Dev/7stroem/build/Debug/7stroem318714917#318714917#0(0"0(0#0#0"8613183840#423"    cd /Users/albi/Dev/7stroem    setenv MACOSX_DEPLOYMENT_TARGET 10.6    /Developer/usr/bin/g++-4.2 -arch x86_64 -isysroot /Developer/SDKs/MacOSX10.6.sdk -L/Users/albi/Dev/7stroem/build/Debug -F/Users/albi/Dev/7stroem/build/Debug -filelist /Users/albi/Dev/7stroem/build/7stroem.build/Debug/7stroem.build/Objects-normal/x86_64/7stroem.LinkFileList -mmacosx-version-min=10.6 -o /Users/albi/Dev/7stroem/build/Debug/7stroem0#
+
