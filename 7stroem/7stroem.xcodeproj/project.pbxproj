@@ -15,6 +15,7 @@
 		61AC2ED412D1DF0C0089E48E /* player.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 61AC2ED312D1DF0C0089E48E /* player.cpp */; };
 		61AC2ED612D1DF540089E48E /* card.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 61AC2ED512D1DF540089E48E /* card.cpp */; };
 		61AC2EF912D1E7200089E48E /* socket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 61AC2EF812D1E7200089E48E /* socket.cpp */; };
+		61C7F9A4130098DE00603362 /* server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 61C7F9A3130098DE00603362 /* server.cpp */; };
 		8DD76F650486A84900D96B5E /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 08FB7796FE84155DC02AAC07 /* main.cpp */; settings = {ATTRIBUTES = (); }; };
 		8DD76F6A0486A84900D96B5E /* eifelpoker.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = C6859E8B029090EE04C91782 /* eifelpoker.1 */; };
 /* End PBXBuildFile section */
@@ -48,6 +49,8 @@
 		61AC2ED512D1DF540089E48E /* card.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = card.cpp; sourceTree = "<group>"; };
 		61AC2EF712D1E7200089E48E /* socket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = socket.h; sourceTree = "<group>"; };
 		61AC2EF812D1E7200089E48E /* socket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = socket.cpp; sourceTree = "<group>"; };
+		61C7F9A2130098DE00603362 /* server.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = server.h; sourceTree = "<group>"; };
+		61C7F9A3130098DE00603362 /* server.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = server.cpp; sourceTree = "<group>"; };
 		61EDAFD412B94154003A1229 /* handlegames.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = handlegames.h; sourceTree = "<group>"; };
 		61EDAFD812B9478A003A1229 /* game.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = game.h; sourceTree = "<group>"; };
 		61EDAFDB12B94952003A1229 /* player.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = player.h; sourceTree = "<group>"; };
@@ -90,6 +93,8 @@
 				61AC2ED512D1DF540089E48E /* card.cpp */,
 				6165A55D12FDA16200B0D734 /* json.h */,
 				6165A55E12FDA16200B0D734 /* json.cpp */,
+				61C7F9A2130098DE00603362 /* server.h */,
+				61C7F9A3130098DE00603362 /* server.cpp */,
 			);
 			name = Source;
 			sourceTree = "<group>";
@@ -184,6 +189,7 @@
 				615C6D0312E4C516002AA2A0 /* httprequest.cpp in Sources */,
 				615C6D0612E4C5D2002AA2A0 /* httpresponse.cpp in Sources */,
 				6165A55F12FDA16200B0D734 /* json.cpp in Sources */,
+				61C7F9A4130098DE00603362 /* server.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
