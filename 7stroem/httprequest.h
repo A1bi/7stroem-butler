@@ -16,6 +16,9 @@ public:
 	HTTPresponse* execute();
 	string getGet(string);
 	void setGet(string, string);
+	string getUri() {
+		return uri;
+	}
 	
 private:
 	// response status code

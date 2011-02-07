@@ -4,6 +4,8 @@
 using namespace std;
 #include "game.h"
 
+// TODO: Exceptions und Fehlerausgabe als JSON!!
+
 // start the game
 void Game::startGame() {
 	// initial turn
@@ -194,7 +196,11 @@ pair<vector<Action*>, int> Game::getActionsSince(int playerId, int start) {
 	
 	// get Player object
 	Player* tPlayer = getPlayer(playerId);
-	if (start >= 0 && start < actions.size() && tPlayer) {
+	if (start >= 0 && tPlayer) {
+		// check if the start is higher than possible
+		if (start > actions.size()) {
+			start = actions.size();
+		}
 		
 		// copy all the actions in the specific range into the new var
 		vector<Action*>::iterator aIter;
@@ -211,10 +217,12 @@ pair<vector<Action*>, int> Game::getActionsSince(int playerId, int start) {
 	return pair<vector<Action*>, int>(newActions, start+i);
 }
 
-// authenticate player and return pointer to Player object
-Player* Game::authenticate(int playerId, string authcode) {
-	if (players[playerId] != NULL && players[playerId]->authenticate(playerId, authcode)) {
-		return players[playerId];
+// authenticate player
+// TODO: access violation when trying to authenticate before games was started
+bool Game::authenticate(int playerId, string authcode) {
+	// check if player is present and authentication succeeded
+	if (players.count(playerId) == 1 && players[playerId]->authenticate(playerId, authcode)) {
+		return true;
 	}
 	return false;
 }
@@ -257,12 +265,13 @@ void Game::setTurn(Player *tPlayer) {
 
 // returns reference to Player object for given id
 Player* Game::getPlayer(int PlayerId) {
-	// get Player object
-	if (players.count(PlayerId) != 1) {
-		// not found
-		return false;
+	// check if there is a player with this id and authentication succeeded
+	if (players.count(PlayerId) == 1) {
+		// return Player object
+		return players[PlayerId];
 	}
-	return players[PlayerId];
+	// not found
+	return false;
 }
 
 // remove player from vector

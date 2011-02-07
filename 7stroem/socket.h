@@ -33,11 +33,19 @@ public:
 	// for windows
 	void cleanup() const {}
 	bool isValid() const {
-		return sock != -1;
+		return (sock != -1);
+	}
+	// returns socket number
+	int getSock() {
+		return sock;
+	}
+	// sets new socket number
+	void setSock(int newSock) {
+		sock = newSock;
 	}
 	
 private:
-	// socket descriptor
+	// socket descriptor and number
 	int sock;
 	sockaddr_in sockAddr;
 	

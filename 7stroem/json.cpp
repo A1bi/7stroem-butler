@@ -74,11 +74,11 @@ string JSONobject::str(int depth) {
 		}
 		
 		// add comma leading to the next child
-		JSONstr += ",";
+		if (vIter+1 != children.end()) {
+			JSONstr += ",";
+		}
 		
 	}
-	// remove last comma which is unneccessary
-	JSONstr.erase(JSONstr.size()-1, 1);
 	// leaving this level so decrease depth
 	depth--;
 	// new line, tabulators and closing }
