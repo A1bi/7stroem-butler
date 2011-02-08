@@ -2,14 +2,11 @@
 #include "json.h"
 #include <iostream>
 
-// constructor
-Server::Server() {
-	max = -1;
-}
 
 // initiates game server
 void Server::start() {
 	
+	int i, ready, sockMax, max = -1;
 	Socket listeningSock, newConnSock, recvSock;
 	listeningSock.bind(4926);
 	listeningSock.listen();
@@ -43,7 +40,8 @@ void Server::start() {
 			// no free number - full
 			if (i == FD_SETSIZE) {
 				newConnSock.close();
-				throw SockExcept("too many clients. haltung!");
+				//throw SockExcept("too many clients. haltung!");
+				continue;
 			}
 			
 			// add connection to socket set
@@ -64,19 +62,29 @@ void Server::start() {
 		
 		// check all sockets to read from
 		// go through all sockets up to max
-		// TODO: check if remote client closed connection
 		for (i = 0; i <= max; i++) {
 			string rawRequest;
 			
-			recvSock.setSock(connSocks[i]);
-			if ((recvSock.getSock()) < 0) {
+			if (connSocks[i] < 0) {
 				continue;
 			}
+			recvSock.setSock(connSocks[i]);
 			
 			// socket in reading socket set -> new data to read (receive) ?
-			if (FD_ISSET(recvSock.getSock(), &sockReadSet)) {
+			if (FD_ISSET(connSocks[i], &sockReadSet)) {
 				// receive data - getting request
-				recvSock.recv(rawRequest);
+				if (recvSock.recv(rawRequest) == 0) {
+					// connection closed
+					closeConn(&recvSock);
+					// check if socket was waiting for actions
+					map<int, PlayerRequest*>::iterator rIter = requestsWaitingSocks.find(connSocks[i]);
+					if (rIter != requestsWaitingSocks.end()) {
+						// mark as closed so it will get destroyed later when handlePlayerRequest() tries to send the new actions
+						rIter->second->sock = -1;
+						// remove
+						requestsWaitingSocks.erase(rIter);
+					}
+				}
 				
 				// parsing request
 				HTTPrequest request(&rawRequest);
@@ -113,6 +121,7 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 		return;
 	}
 	
+	string errorMsg;
 	// authenticate player
 	if (myGame->authenticate(playerId, request->getGet("authcode"))) {
 		// responding to game request
@@ -131,19 +140,64 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 			if (!sendActions(myGame, newRequest)) {
 				// put player into waiting list and send actions later when they occur
 				requestsWaiting[myGame].push_back(newRequest);
+				requestsWaitingSocks[sock->getSock()] = newRequest;
+			// actions already sent -> destroy request
+			} else {
+				delete newRequest;
 			}
 
-						
+
+		// player performed an action
+		} else if (gameRequest == "registerAction") {
+			// register action
+			if (myGame->registerAction(playerId, request->getGet("action"), request->getGet("content"))) {
+				// success
+				HTTPresponse httpResponse;
+				JSONobject jsonResponse;
+				
+				// prepare json response and add to body
+				jsonResponse.addChild("result", "ok");
+				httpResponse << "blubb = " + jsonResponse.str() + ";";
+				
+				// send response to player
+				httpResponse.send(sock);
+				
+				// close and cleanup everything
+				closeConn(sock);
+				
+				// notifying all waiting players of the new actions
+				vector<PlayerRequest*>::iterator rIter;
+				for (rIter = requestsWaiting[myGame].begin(); rIter != requestsWaiting[myGame].end(); ++rIter) {
+					// check if connection is not closed
+					if ((*rIter)->sock > -1) {
+						// connection still alive -> send new actions
+						sendActions(myGame, *rIter);
+					}
+					// destroy request
+					delete *rIter;
+				}
+				// remove everything from waiting list
+				requestsWaiting[myGame].clear();
+				
+			} else {
+				errorMsg = "unknown error while registering your action";
+			}
+
+
 		// unknown request -> close
 		} else {
-			error(sock, "unknown request");
+			errorMsg = "unknown request";
 		}
 
 	// authentication failed -> close
 	} else {
-		error(sock, "authentication failed");
+		errorMsg = "authentication failed";
 	}
-
+	
+	// some error occurred ?
+	if (!errorMsg.empty()) {
+		error(sock, errorMsg);
+	}
 	
 }
 
@@ -154,7 +208,7 @@ bool Server::sendActions(Game* myGame, PlayerRequest* request) {
 	pair<vector<Action*>, int> actions;
 	
 	// get all actions since since
-	actions = myGame->getActionsSince(request->playerId, request->since);cout << actions.second << endl;
+	actions = myGame->getActionsSince(request->playerId, request->since);
 	// no new actions ?
 	if (actions.second-request->since < 1) {
 		// stop here - request gets on waiting list
@@ -162,8 +216,8 @@ bool Server::sendActions(Game* myGame, PlayerRequest* request) {
 	}
 	
 	// prepare response
-	JSONobject response;
-	JSONarray* actionsArray = response.addArray("actions");
+	JSONobject jsonResponse;
+	JSONarray* actionsArray = jsonResponse.addArray("actions");
 	
 	// go through all actions
 	newActions = &(actions.first);
@@ -179,24 +233,20 @@ bool Server::sendActions(Game* myGame, PlayerRequest* request) {
 	// conclude response with the number of the last action
 	stringstream lastAction;
 	lastAction << actions.second;
-	response.addChild("lastAction", lastAction.str());
+	jsonResponse.addChild("lastAction", lastAction.str());
 	
 	// initiate http response
-	HTTPresponse rawResponse;
+	HTTPresponse httpResponse;
 	
 	// prepare json response and add to body
-	rawResponse << "blubb = ";
-	rawResponse << response.str();
-	rawResponse << ";";
+	httpResponse << "blubb = " + jsonResponse.str() + ";";
 	
 	// send response to player
 	actionsSock.setSock(request->sock);
-	rawResponse.send(&actionsSock);
+	httpResponse.send(&actionsSock);
 	
 	// close and cleanup everything
 	closeConn(&actionsSock);
-	// delete request object
-	delete request;
 	
 	return true;
 	
@@ -228,12 +278,15 @@ void Server::error(Socket* sock, string msg) {
 	rawResponse.send(sock);
 	
 	// close and cleanup everything
-	closeConn(sock);	
+	closeConn(sock);
 }
 
 // closes a connection and removes a socket from set
 void Server::closeConn(Socket* sock) {
+	// close connection
 	sock->close();
+	// remove from set
 	FD_CLR(sock->getSock(), &sockSet);
-	connSocks[i] = -1;
+	// reset socket number
+	connSocks[sock->getSock()] = -1;
 }

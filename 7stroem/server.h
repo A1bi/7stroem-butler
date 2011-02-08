@@ -16,17 +16,16 @@ struct PlayerRequest {
 
 class Server {
 public:
-	Server();
 	void start();
 	void createGame(int);
 	
 private:
-	int i, ready, sockMax, max;
 	int connSocks[FD_SETSIZE];
 	fd_set sockSet, sockReadSet;
 	Socket actionsSock;
 	map<int, Game*> games;
 	map<Game*, vector<PlayerRequest*> > requestsWaiting;
+	map<int, PlayerRequest*> requestsWaitingSocks;
 	void handlePlayerRequest(HTTPrequest*, Socket*);
 	void closeConn(Socket*);
 	bool sendActions(Game*, PlayerRequest*);
