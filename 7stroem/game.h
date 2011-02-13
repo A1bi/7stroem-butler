@@ -34,11 +34,11 @@ class Game {
 		possibleActions["call"] = 4;
 		possibleActions["knock"] = 3;
 	}
-	void addPlayer(int playerId, string authcode);
+	bool addPlayer(int playerId, string authcode);
 	bool authenticate(int playerId, string authcode);
 	pair<vector<Action*>, int> getActionsSince(int playerId, int start);
 	bool registerAction(int PlayerId, string action, string content);
-	void startGame();
+	void start();
 	
 	private:
 	typedef vector<Player*> vPlayer;

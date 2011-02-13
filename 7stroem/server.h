@@ -17,7 +17,6 @@ struct PlayerRequest {
 class Server {
 public:
 	void start();
-	void createGame(int);
 	
 private:
 	int connSocks[FD_SETSIZE];
@@ -27,9 +26,12 @@ private:
 	map<Game*, vector<PlayerRequest*> > requestsWaiting;
 	map<int, PlayerRequest*> requestsWaitingSocks;
 	void handlePlayerRequest(HTTPrequest*, Socket*);
+	bool handleServerRequest(HTTPrequest*);
 	void closeConn(Socket*);
 	bool sendActions(Game*, PlayerRequest*);
 	void error(Socket*, string = "");
+	bool createGame(int);
+	static const string authcode;
 };
 
 #endif

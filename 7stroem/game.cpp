@@ -7,7 +7,7 @@ using namespace std;
 // TODO: Exceptions und Fehlerausgabe als JSON!!
 
 // start the game
-void Game::startGame() {
+void Game::start() {
 	// initial turn
 	lastWinner = *activeRound.begin();
 	turn = activeRound.begin();
@@ -46,12 +46,17 @@ void Game::endRound(Player *winner) {
 }
 
 // adds player to players list
-void Game::addPlayer(int playerId, string authcode) {
+bool Game::addPlayer(int playerId, string authcode) {
+	// check if player not yet added
+	if (players.find(playerId) != players.end()) {
+		return false;
+	}
 	// create pointer to new Player object
 	Player *newPlayer = new Player(playerId, authcode);
 	// insert into vector
 	players[playerId] = newPlayer;
 	activeRound.push_back(newPlayer);
+	return true;
 }
 
 // register an action

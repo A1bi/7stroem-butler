@@ -9,7 +9,7 @@ string HTTPresponse::generateHeader() {
 	r << "HTTP/1.1 " << status << " OK\r\n";
 	r << "Server: 7stroem-Game-Butler/0.5 (Unix)\r\n";
 	r << "Content-Type: text/html\r\n";
-	r << "Content-Length: 20\r\n";
+	r << "Content-Length: " << body.size() << "\r\n";
 	// header vars
 	r << generateHeaderVars();
 	r << "Connection: close\r\n\r\n";
