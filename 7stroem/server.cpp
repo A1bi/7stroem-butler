@@ -2,6 +2,7 @@
 #include "json.h"
 #include <iostream>
 
+const string Server::authcode = "zGLqz2QM5RGQkwld";
 
 // initiates game server
 void Server::start() {
@@ -88,11 +89,27 @@ void Server::start() {
 				
 				// parsing request
 				HTTPrequest request(&rawRequest);
-				
+
 				// it's a player request
 				if (request.getUri() == "/player") {
 					handlePlayerRequest(&request, &recvSock);
+				// it's a request by the 7stroem server
+				} else if (request.getUri() == "/server") {
+					HTTPresponse response;
+					if (request.getGet("authcode") == authcode && handleServerRequest(&request)) {
+						response << "ok";
+					} else {
+						response << "error";
+					}
+					response.send(&recvSock);
+					closeConn(&recvSock);
+
+				// unknown action
+				} else {
+					recvSock.send("unknown action");
+					closeConn(&recvSock);
 				}
+
 				
 				// any reading sockets left to be processed
 				if (--ready <= 0) {
@@ -105,6 +122,7 @@ void Server::start() {
 
 }
 
+// handles requests from players
 void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 	
 	// TODO: direkt das player objekt zurückgeben und dann immer den funktionen übergeben. spart die suche im players container
@@ -201,6 +219,35 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 	
 }
 
+// handles requests from the remote 7stroem server
+bool Server::handleServerRequest(HTTPrequest* request) {
+	// create game
+	if (request->getGet("request") == "createGame") {
+		if (request->getGet("id") != "" && createGame(atoi(request->getGet("id").c_str()))) {
+			return true;
+		}
+	// requests with game id
+	} else if (request->getGet("gId") != "") {
+		// get game
+		map<int, Game*>::iterator mIter = games.find( atoi(request->getGet("gId").c_str()) );
+		// check if game exists
+		if (mIter != games.end()) {
+			// register player
+			if (request->getGet("request") == "registerPlayer") {
+				if (request->getGet("pId") != "" && request->getGet("pAuthcode") != "" && mIter->second->addPlayer( atoi(request->getGet("pId").c_str()), request->getGet("pAuthcode") )) {
+					return true;
+				}
+			// start game
+			} else if (request->getGet("request") == "start") {
+				mIter->second->start();
+				return true;
+			}
+		}
+	}
+	return false;
+}
+		
+// send actions to players in waiting list
 bool Server::sendActions(Game* myGame, PlayerRequest* request) {
 	
 	vector<Action*>::iterator aIter;
@@ -253,14 +300,14 @@ bool Server::sendActions(Game* myGame, PlayerRequest* request) {
 }
 
 // creates a new game and stores it under given id
-void Server::createGame(int gameId) {
-	Game* newGame = new Game;
-	// test values !!!!
-	newGame->addPlayer(123, "bla");
-	newGame->addPlayer(124, "bla");
-	newGame->addPlayer(125, "bla");
-	newGame->startGame();
-	games[gameId] = newGame;
+bool Server::createGame(int gameId) {
+	// check if game id not yet created
+	if (games.find(gameId) == games.end()) {
+		Game* newGame = new Game;
+		games[gameId] = newGame;
+		return true;
+	}
+	return false;
 }
 
 // send error back to client
