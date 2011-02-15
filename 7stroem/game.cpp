@@ -56,6 +56,9 @@ bool Game::addPlayer(int playerId, string authcode) {
 	// insert into vector
 	players[playerId] = newPlayer;
 	activeRound.push_back(newPlayer);
+	// register as action
+	notifyAction("playerJoined", newPlayer, "");
+	
 	return true;
 }
 
@@ -68,6 +71,13 @@ bool Game::registerAction(int PlayerId, string action, string content) {
 		return false;
 	}
 	
+	// chat
+	if (action == "chat") {
+		notifyAction("chat", tPlayer, content);
+		return true;
+	}
+	
+	// TODO: FIX: bad access vor spielbeginn
 	// is it the player's turn and he doesn't want to fold ?
 	if ( ((tPlayer != *turn || activeKnock.empty() && action == "call") && action != "fold" && action != "call") || find(activeRound.begin(), activeRound.end(), tPlayer) == activeRound.end() ) {
 		// not allowed here -> false
@@ -77,7 +87,7 @@ bool Game::registerAction(int PlayerId, string action, string content) {
 	bool success = false;
 	switch (possibleActions[action]) {
 			
-			// fold
+		// fold
 		case 1: {
 			// fold cards -> quit round
 			if (tPlayer->fold()) {
@@ -101,7 +111,7 @@ bool Game::registerAction(int PlayerId, string action, string content) {
 			break;
 		}
 			
-			// layStack
+		// layStack
 		case 2: {
 			// get Card object
 			Card* lCard = tPlayer->cardFromHand(content);
@@ -149,7 +159,7 @@ bool Game::registerAction(int PlayerId, string action, string content) {
 			break;
 		}
 			
-			// knock
+		// knock
 		case 3: {
 			success = tPlayer->knock();
 			if (success) {
@@ -160,7 +170,7 @@ bool Game::registerAction(int PlayerId, string action, string content) {
 			break;
 		}
 			
-			// call
+		// call
 		case 4: {
 			if (!activeKnock.empty()) {
 				removePlayer(activeKnock, tPlayer);
@@ -169,6 +179,7 @@ bool Game::registerAction(int PlayerId, string action, string content) {
 			}
 			break;
 		}
+
 			
 	}
 	

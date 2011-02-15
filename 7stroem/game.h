@@ -15,6 +15,11 @@ struct Action {
 	Action(string nAction, Player *nPlayer = NULL, string nContent = ""): action(nAction), player(nPlayer), content(nContent) {}
 };
 
+struct PlayerRequest {
+	int playerId, since, sock;
+	PlayerRequest(int p, int si, int so): playerId(p), since(si), sock(so) {}
+};
+
 class Game {
 	public:
 	// constructor: set gameId and create card deck
@@ -39,6 +44,7 @@ class Game {
 	pair<vector<Action*>, int> getActionsSince(int playerId, int start);
 	bool registerAction(int PlayerId, string action, string content);
 	void start();
+	vector<PlayerRequest*> requestsWaiting; // TODO: private machen!!
 	
 	private:
 	typedef vector<Player*> vPlayer;

@@ -8,6 +8,9 @@ string HTTPresponse::generateHeader() {
 	stringstream r;
 	r << "HTTP/1.1 " << status << " OK\r\n";
 	r << "Server: 7stroem-Game-Butler/0.5 (Unix)\r\n";
+	r << "Pragma: no-cache\r\n";
+	r << "Cache-Control: no-cache\r\n";
+	r << "Expires: 0\r\n";
 	r << "Content-Type: text/html\r\n";
 	r << "Content-Length: " << body.size() << "\r\n";
 	// header vars

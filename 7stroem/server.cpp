@@ -89,6 +89,7 @@ void Server::start() {
 				
 				// parsing request
 				HTTPrequest request(&rawRequest);
+				cout << request.getGet("request") << endl;
 
 				// it's a player request
 				if (request.getUri() == "/player") {
@@ -157,7 +158,7 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 			// send actions if there are already new actions
 			if (!sendActions(myGame, newRequest)) {
 				// put player into waiting list and send actions later when they occur
-				requestsWaiting[myGame].push_back(newRequest);
+				myGame->requestsWaiting.push_back(newRequest);
 				requestsWaitingSocks[sock->getSock()] = newRequest;
 			// actions already sent -> destroy request
 			} else {
@@ -175,27 +176,16 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 				
 				// prepare json response and add to body
 				jsonResponse.addChild("result", "ok");
-				httpResponse << "blubb = " + jsonResponse.str() + ";";
+				httpResponse << "result = " + jsonResponse.str() + ";";
 				
 				// send response to player
 				httpResponse.send(sock);
 				
 				// close and cleanup everything
 				closeConn(sock);
-				
-				// notifying all waiting players of the new actions
-				vector<PlayerRequest*>::iterator rIter;
-				for (rIter = requestsWaiting[myGame].begin(); rIter != requestsWaiting[myGame].end(); ++rIter) {
-					// check if connection is not closed
-					if ((*rIter)->sock > -1) {
-						// connection still alive -> send new actions
-						sendActions(myGame, *rIter);
-					}
-					// destroy request
-					delete *rIter;
-				}
-				// remove everything from waiting list
-				requestsWaiting[myGame].clear();
+
+				// send new actions to waiting players
+				sendToWaiting(myGame);
 				
 			} else {
 				errorMsg = "unknown error while registering your action";
@@ -219,6 +209,23 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 	
 }
 
+// send all actions to waiting players
+void Server::sendToWaiting(Game* game) {
+	// notifying all waiting players of the new actions
+	vector<PlayerRequest*>::iterator rIter;
+	for (rIter = game->requestsWaiting.begin(); rIter != game->requestsWaiting.end(); ++rIter) {
+		// check if connection is not closed
+		if ((*rIter)->sock > -1) {
+			// connection still alive -> send new actions
+			sendActions(game, *rIter);
+		}
+		// destroy request
+		delete *rIter;
+	}
+	// remove everything from waiting list
+	game->requestsWaiting.clear();
+}
+
 // handles requests from the remote 7stroem server
 bool Server::handleServerRequest(HTTPrequest* request) {
 	// create game
@@ -235,6 +242,7 @@ bool Server::handleServerRequest(HTTPrequest* request) {
 			// register player
 			if (request->getGet("request") == "registerPlayer") {
 				if (request->getGet("pId") != "" && request->getGet("pAuthcode") != "" && mIter->second->addPlayer( atoi(request->getGet("pId").c_str()), request->getGet("pAuthcode") )) {
+					sendToWaiting(mIter->second);
 					return true;
 				}
 			// start game
@@ -246,7 +254,7 @@ bool Server::handleServerRequest(HTTPrequest* request) {
 	}
 	return false;
 }
-		
+
 // send actions to players in waiting list
 bool Server::sendActions(Game* myGame, PlayerRequest* request) {
 	
@@ -286,7 +294,7 @@ bool Server::sendActions(Game* myGame, PlayerRequest* request) {
 	HTTPresponse httpResponse;
 	
 	// prepare json response and add to body
-	httpResponse << "blubb = " + jsonResponse.str() + ";";
+	httpResponse << "game.registerActions(" + jsonResponse.str() + ");";
 	
 	// send response to player
 	actionsSock.setSock(request->sock);
