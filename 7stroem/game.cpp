@@ -12,7 +12,7 @@ void Game::start() {
 	lastWinner = *activeRound.begin();
 	turn = activeRound.begin();
 	// notify game has started
-	notifyAction("startgame", *turn);
+	notifyAction("started", *turn);
 	// start first round
 	startRound();
 	// notify first turn
@@ -262,6 +262,8 @@ void Game::giveCards() {
 			// next random card
 			randomCard++;
 		}
+		// erase last comma
+		givenCards.erase(givenCards.size()-1, 1);
 		notifyAction("giveCards", *pIter, givenCards);
 	}
 }

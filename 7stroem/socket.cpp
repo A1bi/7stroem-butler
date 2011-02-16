@@ -98,7 +98,7 @@ int Socket::recv(string& s, int max) const {
 		s = buf;
 		return status;
 	} else {
-		throw SockExcept("error receiving data");
+		//throw SockExcept("error receiving data");
 		return 0;
 	}
 

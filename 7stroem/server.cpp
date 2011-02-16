@@ -246,8 +246,9 @@ bool Server::handleServerRequest(HTTPrequest* request) {
 					return true;
 				}
 			// start game
-			} else if (request->getGet("request") == "start") {
+			} else if (request->getGet("request") == "startGame") {
 				mIter->second->start();
+				sendToWaiting(mIter->second);
 				return true;
 			}
 		}
