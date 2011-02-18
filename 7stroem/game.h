@@ -72,7 +72,7 @@ class Game {
 	void nextTurn();
 	void setTurn(Player *tPlayer);
 	void startRound();
-	void endRound(Player *winner);
+	void endRound();
 	bool removePlayer(vPlayer &oPlayers, Player *delPlayer);
 
 };

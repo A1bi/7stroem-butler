@@ -22,18 +22,19 @@ void Game::start() {
 // start a round
 void Game::startRound() {
 	smallRounds = 1;
+	lastWinner = *turn;
 	// notify that round has started
-	notifyAction("startround", lastWinner);
+	notifyAction("roundStarted", lastWinner);
 	giveCards();
 }
 
 // end a round
-void Game::endRound(Player *winner) {
-	winner->win();
-	notifyAction("endround", winner);
+void Game::endRound() {
+	lastWinner->win();
+	notifyAction("roundEnded", lastWinner);
 	// before we reset we have to save the current turn's pointer so we can find the player afterwards
 	Player* oldTurn = *turn;
-	// reset to all players active active
+	// reset to all players active
 	activeRound.clear();
 	map<int, Player*>::iterator pIter;
 	for (pIter = players.begin(); pIter != players.end(); ++pIter) {
@@ -42,6 +43,9 @@ void Game::endRound(Player *winner) {
 	// since we recreated activeRound we now have to find back the turn we had before using oldTurn
 	// also increase to get next turn
 	turn = find(activeRound.begin(), activeRound.end(), oldTurn) + 1;
+	if (turn == activeRound.end()) {
+		turn = activeRound.begin();
+	}
 	startRound();
 }
 
@@ -91,7 +95,7 @@ bool Game::registerAction(int PlayerId, string action, string content) {
 		case 1: {
 			// fold cards -> quit round
 			if (tPlayer->fold()) {
-				notifyAction(action, tPlayer);
+				notifyAction("folded", tPlayer);
 				// remove player if there is an active knock
 				if (!activeKnock.empty()) {
 					removePlayer(activeKnock, tPlayer);
@@ -101,8 +105,9 @@ bool Game::registerAction(int PlayerId, string action, string content) {
 				removePlayer(activeRound, tPlayer);
 				if (activeRound.size() == 1) {
 					// only one player left -> end round
-					setTurn(activeRound.front());
-					endRound(activeRound.front());
+					lastWinner = activeRound.front();
+					setTurn(lastWinner);
+					endRound();
 				}
 				notifyAction("turn", *turn);
 				
@@ -126,7 +131,7 @@ bool Game::registerAction(int PlayerId, string action, string content) {
 			
 			// try to lay the card on stack
 			if (tPlayer->layStack(lCard)) {
-				notifyAction("layStack", tPlayer, lCard->getCardId());
+				notifyAction("laidStack", tPlayer, lCard->getCardId());
 				nextTurn();
 				// small round complete
 				if (*turn == lastWinner) {
@@ -147,7 +152,7 @@ bool Game::registerAction(int PlayerId, string action, string content) {
 					setTurn(lastWinner);
 					// it's now the player's turn who has won
 					if (smallRounds == 4) {
-						endRound(lastWinner);
+						endRound();
 					} else {
 						// next small round
 						smallRounds++;

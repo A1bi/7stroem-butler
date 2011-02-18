@@ -11,6 +11,7 @@ class Player {
 	// constructor: set id of user and the code required to authenticate a user
 	Player(int pId, string pAuthcode): PlayerId(pId), authcode(pAuthcode) {
 		strikes = 0;
+		newRound();
 	}
 	bool authenticate(int pid, string authcode);
 	void giveCard(Card *givenCard);
