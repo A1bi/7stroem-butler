@@ -9,10 +9,7 @@ using namespace std;
 class Player {
 	public:
 	// constructor: set id of user and the code required to authenticate a user
-	Player(int pId, string pAuthcode): PlayerId(pId), authcode(pAuthcode) {
-		strikes = 0;
-		newRound();
-	}
+	Player(int pId, string pAuthcode);
 	bool authenticate(int pid, string authcode);
 	void giveCard(Card *givenCard);
 	bool layStack(Card *hCard);
@@ -25,6 +22,7 @@ class Player {
 	Card* cardFromHand(string cardId);
 	bool checkForSuit(Card* givenCard);
 	int getId();
+	int getStrikes();
 	
 	private:
 	const int PlayerId;

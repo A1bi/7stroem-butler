@@ -23,22 +23,7 @@ struct PlayerRequest {
 class Game {
 	public:
 	// constructor: set gameId and create card deck
-	Game() {
-		// suits and numbers
-		char suits[4] = { 'd', 's', 'h', 'c' };
-		int numbers[8] = { 3, 4, 5, 6, 7, 8, 9, 10 };
-		for (int i = 0; i < 4; i++) {
-			for (int j = 0; j < 8; j++) {
-				// create card in card deck
-				Card *newCard = new Card(suits[i], numbers[j]);
-				allCards.push_back(newCard);
-			}
-		}
-		possibleActions["layStack"] = 2;
-		possibleActions["fold"] = 1;
-		possibleActions["call"] = 4;
-		possibleActions["knock"] = 3;
-	}
+	Game();
 	bool addPlayer(int playerId, string authcode);
 	bool authenticate(int playerId, string authcode);
 	pair<vector<Action*>, int> getActionsSince(int playerId, int start);
@@ -64,7 +49,7 @@ class Game {
 	map<string, int> possibleActions;
 	// number of knocks players did in this round
 	int knocks;
-	int smallRounds;
+	int turns;
 	Player* getPlayer(int playerId);
 	void notifyAction(string action, Player *aPlayer, string content);
 	void notifyAction(string action, Player *aPlayer);
@@ -72,7 +57,8 @@ class Game {
 	void nextTurn();
 	void setTurn(Player *tPlayer);
 	void startRound();
-	void endRound();
+	void startSmallRound();
+	void endSmallRound();
 	bool removePlayer(vPlayer &oPlayers, Player *delPlayer);
 
 };

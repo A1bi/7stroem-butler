@@ -1,44 +1,76 @@
 #include <string>
+#include <sstream>
 #include <map>
 #include <vector>
 using namespace std;
 #include "game.h"
 
 // TODO: Exceptions und Fehlerausgabe als JSON!!
+// TODO: notifyAction() für content als int überladen
+
+// constructor
+Game::Game() {
+	// suits and numbers
+	char suits[4] = { 'd', 's', 'h', 'c' };
+	int numbers[8] = { 3, 4, 5, 6, 7, 8, 9, 10 };
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 8; j++) {
+			// create card in card deck
+			Card *newCard = new Card(suits[i], numbers[j]);
+			allCards.push_back(newCard);
+		}
+	}
+	possibleActions["layStack"] = 2;
+	possibleActions["fold"] = 1;
+	possibleActions["call"] = 4;
+	possibleActions["knock"] = 3;
+}
 
 // start the game
 void Game::start() {
 	// initial turn
-	lastWinner = *activeRound.begin();
 	turn = activeRound.begin();
 	// notify game has started
 	notifyAction("started", *turn);
 	// start first round
 	startRound();
-	// notify first turn
-	notifyAction("turn", *turn);
 }
 
 // start a round
 void Game::startRound() {
-	smallRounds = 1;
-	lastWinner = *turn;
 	// notify that round has started
-	notifyAction("roundStarted", lastWinner);
+	notifyAction("roundStarted", *turn);
+	startSmallRound();
+}
+
+// start a round
+void Game::startSmallRound() {
+	turns = 1;
+	// new winner is now the player who is first
+	lastWinner = *turn;
+	// notify that small round has started
+	notifyAction("smallRoundStarted", lastWinner);
 	giveCards();
+	// notify first turn
+	notifyAction("turn", *turn);
 }
 
 // end a round
-void Game::endRound() {
+void Game::endSmallRound() {
 	lastWinner->win();
-	notifyAction("roundEnded", lastWinner);
+	notifyAction("smallRoundEnded", lastWinner);
 	// before we reset we have to save the current turn's pointer so we can find the player afterwards
 	Player* oldTurn = *turn;
 	// reset to all players active
 	activeRound.clear();
 	map<int, Player*>::iterator pIter;
+	stringstream strikes;
 	for (pIter = players.begin(); pIter != players.end(); ++pIter) {
 		activeRound.push_back(pIter->second);
+		strikes << pIter->second->getStrikes();
+		notifyAction("strikes", pIter->second, strikes.str());
+		strikes.str("");
+		strikes.clear();
 	}
 	// since we recreated activeRound we now have to find back the turn we had before using oldTurn
 	// also increase to get next turn
@@ -46,7 +78,7 @@ void Game::endRound() {
 	if (turn == activeRound.end()) {
 		turn = activeRound.begin();
 	}
-	startRound();
+	startSmallRound();
 }
 
 // adds player to players list
@@ -61,7 +93,7 @@ bool Game::addPlayer(int playerId, string authcode) {
 	players[playerId] = newPlayer;
 	activeRound.push_back(newPlayer);
 	// register as action
-	notifyAction("playerJoined", newPlayer, "");
+	notifyAction("playerJoined", newPlayer);
 	
 	return true;
 }
@@ -88,7 +120,6 @@ bool Game::registerAction(int PlayerId, string action, string content) {
 		return false;
 	}
 	
-	bool success = false;
 	switch (possibleActions[action]) {
 			
 		// fold
@@ -107,7 +138,7 @@ bool Game::registerAction(int PlayerId, string action, string content) {
 					// only one player left -> end round
 					lastWinner = activeRound.front();
 					setTurn(lastWinner);
-					endRound();
+					endSmallRound();
 				}
 				notifyAction("turn", *turn);
 				
@@ -142,8 +173,8 @@ bool Game::registerAction(int PlayerId, string action, string content) {
 						if (*pIter != lastWinner) {
 							if (lastWinner->lastStack()->cmpSuitTo((*pIter)->lastStack()) && ((*pIter)->lastStack() > lastWinner->lastStack())) {
 								lastWinner = *pIter;
-							} else if (smallRounds == 4) {
-								// last small round -> player lost this round
+							} else if (turns == 4) {
+								// last turn of small round -> player lost this round
 								(*pIter)->lose();
 							}
 						}
@@ -151,12 +182,13 @@ bool Game::registerAction(int PlayerId, string action, string content) {
 					// it's last winner's turn
 					setTurn(lastWinner);
 					// it's now the player's turn who has won
-					if (smallRounds == 4) {
-						endRound();
+					if (turns == 4) {
+						endSmallRound();
 					} else {
-						// next small round
-						smallRounds++;
+						// next turn
+						turns++;
 					}
+					
 				}
 				notifyAction("turn", *turn);
 				return true;
@@ -166,21 +198,29 @@ bool Game::registerAction(int PlayerId, string action, string content) {
 			
 		// knock
 		case 3: {
-			success = tPlayer->knock();
-			if (success) {
+			if (tPlayer->knock()) {
 				activeKnock = activeRound;
 				removePlayer(activeKnock, tPlayer);
 				knocks++;
+				notifyAction("knocked", tPlayer);
+				return true;
 			}
 			break;
 		}
 			
 		// call
 		case 4: {
-			if (!activeKnock.empty()) {
+			// check if there is a knock to call and the player didn't do so already
+			if (!activeKnock.empty() && find(activeKnock.begin(), activeKnock.end(), tPlayer) != activeKnock.end()) {
 				removePlayer(activeKnock, tPlayer);
 				tPlayer->call();
-				success = true;
+				notifyAction("called", tPlayer);
+				// all players have called ?
+				if (activeKnock.empty()) {
+					// notify that the last knocking player can now take his turn
+					notifyAction("turn", *turn);
+				}
+				return true;
 			}
 			break;
 		}
@@ -188,11 +228,6 @@ bool Game::registerAction(int PlayerId, string action, string content) {
 			
 	}
 	
-	// action successfully executed
-	if (success) {
-		notifyAction(action, tPlayer, content);
-		return true;
-	}
 	// not executed -> may not be permitted or possible
 	return false;
 	

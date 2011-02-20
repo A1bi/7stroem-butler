@@ -4,6 +4,12 @@
 using namespace std;
 #include "player.h"
 
+// constructor
+Player::Player(int pId, string pAuthcode): PlayerId(pId), authcode(pAuthcode) {
+	strikes = 0;
+	newRound();
+}
+
 // returns player id
 int Player::getId() {
 	return PlayerId;
@@ -79,7 +85,7 @@ void Player::newRound() {
 	// other things
 	folded = false;
 	knocked = false;
-	calls = 0;
+	calls = 1;
 }
 
 // player knocks
@@ -117,4 +123,9 @@ void Player::lose() {
 // player wins
 void Player::win() {
 	newRound();
+}
+
+// return number of strikes
+int Player::getStrikes() {
+	return strikes;
 }
