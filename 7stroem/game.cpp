@@ -132,6 +132,8 @@ bool Game::registerAction(int PlayerId, string action, string content) {
 					removePlayer(activeKnock, tPlayer);
 				}
 				
+				// save current turn for later
+				Player* oldTurn = *turn;
 				// remove player from active list
 				removePlayer(activeRound, tPlayer);
 				if (activeRound.size() == 1) {
@@ -139,8 +141,23 @@ bool Game::registerAction(int PlayerId, string action, string content) {
 					lastWinner = activeRound.front();
 					setTurn(lastWinner);
 					endSmallRound();
+					
+				} else {
+					setTurn(oldTurn);
+					// it was this player's turn so we have to go to the next player
+					if (oldTurn == tPlayer) {
+						nextTurn();
+						notifyAction("turn", *turn);
+					}
+					// last winner is now the player next to this player
+					if (lastWinner == tPlayer) {
+						if (turn == activeRound.end()) {
+							lastWinner = activeRound.front();
+						} else {
+							lastWinner = *turn;
+						}
+					}
 				}
-				notifyAction("turn", *turn);
 				
 				return true;
 			}
@@ -224,7 +241,7 @@ bool Game::registerAction(int PlayerId, string action, string content) {
 			}
 			break;
 		}
-
+			
 			
 	}
 	
@@ -310,8 +327,7 @@ void Game::giveCards() {
 
 // it's the next player's turn
 void Game::nextTurn() {
-	turn++;
-	if (turn == activeRound.end()) {
+	if (++turn == activeRound.end()) {
 		turn = activeRound.begin();
 	}
 }

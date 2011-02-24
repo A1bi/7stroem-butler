@@ -85,12 +85,12 @@ void Server::start() {
 						// remove
 						requestsWaitingSocks.erase(rIter);
 					}
+					continue;
 				}
 				
 				// parsing request
 				HTTPrequest request(&rawRequest);
-				cout << request.getGet("request") << endl;
-
+				
 				// it's a player request
 				if (request.getUri() == "/player") {
 					handlePlayerRequest(&request, &recvSock);
@@ -104,23 +104,24 @@ void Server::start() {
 					}
 					response.send(&recvSock);
 					closeConn(&recvSock);
-
+					
 				// unknown action
 				} else {
 					recvSock.send("unknown action");
 					closeConn(&recvSock);
 				}
-
+				
 				
 				// any reading sockets left to be processed
 				if (--ready <= 0) {
 					break;
 				}
 			}
+
 		}
 		
 	}
-
+	
 }
 
 // handles requests from players
@@ -164,8 +165,8 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 			} else {
 				delete newRequest;
 			}
-
-
+			
+			
 		// player performed an action
 		} else if (gameRequest == "registerAction") {
 			// register action
@@ -183,20 +184,20 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 				
 				// close and cleanup everything
 				closeConn(sock);
-
+				
 				// send new actions to waiting players
 				sendToWaiting(myGame);
 				
 			} else {
 				errorMsg = "unknown error while registering your action";
 			}
-
-
+			
+			
 		// unknown request -> close
 		} else {
 			errorMsg = "unknown request";
 		}
-
+		
 	// authentication failed -> close
 	} else {
 		errorMsg = "authentication failed";
