@@ -4,9 +4,12 @@
 #include <string>
 #include <vector>
 #include <map>
+#include "boost/thread/thread.hpp"
 using namespace std;
 #include "player.h"
 #include "card.h"
+
+class Game;
 
 struct Action {
 	string action;
@@ -16,8 +19,10 @@ struct Action {
 };
 
 struct PlayerRequest {
-	int playerId, since, sock;
-	PlayerRequest(int p, int si, int so): playerId(p), since(si), sock(so) {}
+	int since, sock;
+	Game* game;
+	Player* player;
+	PlayerRequest(Game* g, Player* p, int si, int so): game(g), player(p), since(si), sock(so) {}
 };
 
 class Game {
@@ -25,11 +30,12 @@ class Game {
 	// constructor: set gameId and create card deck
 	Game();
 	bool addPlayer(int playerId, string authcode);
-	bool authenticate(int playerId, string authcode);
-	pair<vector<Action*>, int> getActionsSince(int playerId, int start);
-	bool registerAction(int PlayerId, string action, string content);
+	Player* authenticate(int playerId, string authcode);
+	pair<vector<Action*>, int> getActionsSince(Player*, int start);
+	bool registerAction(Player*, string action, string content);
 	void start();
 	vector<PlayerRequest*> requestsWaiting; // TODO: private machen!!
+	boost::mutex mutex;
 	
 	private:
 	typedef vector<Player*> vPlayer;
@@ -51,8 +57,7 @@ class Game {
 	int knocks;
 	int turns;
 	Player* getPlayer(int playerId);
-	void notifyAction(string action, Player *aPlayer, string content);
-	void notifyAction(string action, Player *aPlayer);
+	void notifyAction(string action, Player *aPlayer, string content = "");
 	void giveCards();
 	void nextTurn();
 	void setTurn(Player *tPlayer);

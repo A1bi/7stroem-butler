@@ -23,6 +23,10 @@ class Player {
 	bool checkForSuit(Card* givenCard);
 	int getId();
 	int getStrikes();
+	void setConnected();
+	void setDisconnected();
+	bool isConnected();
+	bool isMissing();
 	
 	private:
 	const int PlayerId;
@@ -34,6 +38,9 @@ class Player {
 	int strikes;
 	int calls;
 	bool knocked;
+	bool connected;
+	int lastSeen;
+	
 	void newRound();
 	void incStrikes(int newStrikes);
 

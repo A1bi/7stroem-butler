@@ -99,13 +99,7 @@ bool Game::addPlayer(int playerId, string authcode) {
 }
 
 // register an action
-bool Game::registerAction(int PlayerId, string action, string content) {
-	// get Player object
-	Player *tPlayer = getPlayer(PlayerId);
-	if (!tPlayer) {
-		// player not found
-		return false;
-	}
+bool Game::registerAction(Player* tPlayer, string action, string content) {
 	
 	// chat
 	if (action == "chat") {
@@ -256,19 +250,12 @@ void Game::notifyAction(string action, Player *aPlayer, string content) {
 	// queue action
 	actions.push_back(newAction);
 }
-void Game::notifyAction(string action, Player *aPlayer) {
-	Action *newAction = new Action(action, aPlayer, "");
-	// queue action
-	actions.push_back(newAction);
-}
 
 // get all actions since the given start up to the most recent
-pair<vector<Action*>, int> Game::getActionsSince(int playerId, int start) {
+pair<vector<Action*>, int> Game::getActionsSince(Player* tPlayer, int start) {
 	vector<Action*> newActions;
 	int i = 0;
 	
-	// get Player object
-	Player* tPlayer = getPlayer(playerId);
 	if (start >= 0 && tPlayer) {
 		// check if the start is higher than possible
 		if (start > actions.size()) {
@@ -292,12 +279,14 @@ pair<vector<Action*>, int> Game::getActionsSince(int playerId, int start) {
 
 // authenticate player
 // TODO: access violation when trying to authenticate before games was started
-bool Game::authenticate(int playerId, string authcode) {
-	// check if player is present and authentication succeeded
-	if (players.count(playerId) == 1 && players[playerId]->authenticate(playerId, authcode)) {
-		return true;
+Player* Game::authenticate(int playerId, string authcode) {
+	// get Player object
+	Player* wantedPlayer = getPlayer(playerId);
+	// authentication succeeded ?
+	if (wantedPlayer->authenticate(playerId, authcode)) {
+		return wantedPlayer;
 	}
-	return false;
+	return NULL;
 }
 
 // give all players new randomly selected cards
@@ -345,7 +334,7 @@ Player* Game::getPlayer(int PlayerId) {
 		return players[PlayerId];
 	}
 	// not found
-	return false;
+	return NULL;
 }
 
 // remove player from vector

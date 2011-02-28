@@ -18,7 +18,7 @@ Socket::Socket() {
 // destructor
 Socket::~Socket() {
 	// close socket
-	if (isValid()) ::close(sock);
+	//if (isValid()) ::close(sock);
 }
 
 // binds socket to address and port

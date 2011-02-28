@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include "boost/thread/thread.hpp"
 #include "socket.h"
 #include "game.h"
 #include "httprequest.h"
@@ -14,19 +15,26 @@ public:
 	void start();
 	
 private:
-	int connSocks[FD_SETSIZE];
-	fd_set sockSet, sockReadSet;
-	Socket actionsSock;
 	map<int, Game*> games;
-	map<int, PlayerRequest*> requestsWaitingSocks;
+	vector<PlayerRequest*> openConnections;
+	vector<Player*> missingPlayers;
+	static const string authcode;
+	
+	void checkConnections();
+	void checkMissingPlayers();
+	void listen(Socket*);
+	void handleNewConnection(int);
 	void handlePlayerRequest(HTTPrequest*, Socket*);
 	bool handleServerRequest(HTTPrequest*);
-	void closeConn(Socket*);
-	bool sendActions(Game*, PlayerRequest*);
+	bool sendActions(PlayerRequest*);
 	void sendToWaiting(Game*);
 	void error(Socket*, string = "");
 	bool createGame(int);
-	static const string authcode;
+	
+	// mutexes
+	boost::mutex mutexConn;
+	boost::mutex mutexMissingPlayers;
+	
 };
 
 #endif

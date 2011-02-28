@@ -1,125 +1,171 @@
 #include "server.h"
 #include "json.h"
+
 #include <iostream>
 
 const string Server::authcode = "zGLqz2QM5RGQkwld";
 
-// initiates game server
+// starts game server
 void Server::start() {
 	
-	int i, ready, sockMax, max = -1;
-	Socket listeningSock, newConnSock, recvSock;
+	// create listening sock whick checks for new connections
+	Socket listeningSock;
 	listeningSock.bind(4926);
 	listeningSock.listen();
+	// create new connection checking thread
+	boost::thread listening(boost::bind(&Server::listen, this, &listeningSock));
 	
-	sockMax = listeningSock.getSock();
-	for (i = 0; i < FD_SETSIZE; i++) {
-		connSocks[i] = -1;
+	// check connections and missing players periodically
+	boost::thread checkingConns(boost::bind(&Server::checkConnections, this));
+	boost::thread checkingMissing(boost::bind(&Server::checkMissingPlayers, this));
+	
+	// don't stop here - wait for listening thread
+	listening.join();
+}
+
+// listen for new connections, accept and pass them on to a new thread of handleNewConnection()
+void Server::listen(Socket* sock) {
+	
+	// socket for a new connection
+	Socket newConnSock;
+	
+	// TODO: check if server is not full
+	while (true) {
+		// accept new incoming connections
+		sock->accept(newConnSock);
+		
+		// create new thread for each new connection
+		boost::thread newConn(boost::bind(&Server::handleNewConnection, this, newConnSock.getSock()));
 	}
-	FD_ZERO(&sockSet);
-	FD_SET(listeningSock.getSock(), &sockSet);
+}
+
+// checks all open connections if they might have been closed
+void Server::checkConnections() {
 	
+	Socket checkSock;
+	int ready, sockMax;
+	string dummy;
+	vector<PlayerRequest*>::iterator vIter;
+	fd_set sockSet;
+	struct timeval timeout;
+	timeout.tv_sec = 0;
+	timeout.tv_usec = 500;
 	
 	while (true) {
 		
-		// reset reading socket set
-		sockReadSet = sockSet;
-		// check on all sockets in socket set if there is a socket ready for reading
-		ready = select(sockMax+1, &sockReadSet, NULL, NULL, NULL);
-		// new connection ?
-		if (FD_ISSET(listeningSock.getSock(), &sockReadSet)) {
-			listeningSock.accept(newConnSock);
-			
-			// assign new connection to a free socket number
-			for (i = 0; i < FD_SETSIZE; i++) {
-				if (connSocks[i] < 0) {
-					connSocks[i] = newConnSock.getSock();
-					break;
-				}
-			}
-			
-			// no free number - full
-			if (i == FD_SETSIZE) {
-				newConnSock.close();
-				//throw SockExcept("too many clients. haltung!");
+		sleep(5);
+		FD_ZERO(&sockSet);
+		sockMax = -1;
+		boost::mutex::scoped_lock lock(mutexConn);
+		// create a socket set which contains all open connections
+		for (vIter = openConnections.begin(); vIter != openConnections.end(); ++vIter) {
+			// already closed by sendActions() ?
+			if ((*vIter)->sock == -2) {
+				// remove from list
+				delete *vIter;
+				openConnections.erase(vIter);
+				vIter--;
 				continue;
 			}
 			
-			// add connection to socket set
-			FD_SET(newConnSock.getSock(), &sockSet);
-			// get highest socket number for select()
-			if (newConnSock.getSock() > sockMax) {
-				sockMax = newConnSock.getSock();
-			}
-			// get highest sock number - needed later for checking all the reading sockets
-			if (i > max) {
-				max = i;
-			}
-			// if there is no other ready socket we can stop here
-			if (--ready <= 0) {
-				continue;
+			FD_SET((*vIter)->sock, &sockSet);
+			if ((*vIter)->sock > sockMax) {
+				sockMax = (*vIter)->sock;
 			}
 		}
 		
+		// check on all sockets in socket set if there is a socket ready for reading
+		ready = select(sockMax+1, &sockSet, NULL, NULL, &timeout);
+		if (ready < 1) continue;
+
 		// check all sockets to read from
-		// go through all sockets up to max
-		for (i = 0; i <= max; i++) {
-			string rawRequest;
-			
-			if (connSocks[i] < 0) {
-				continue;
-			}
-			recvSock.setSock(connSocks[i]);
+		for (vIter = openConnections.begin(); vIter != openConnections.end(); ++vIter) {
 			
 			// socket in reading socket set -> new data to read (receive) ?
-			if (FD_ISSET(connSocks[i], &sockReadSet)) {
-				// receive data - getting request
-				if (recvSock.recv(rawRequest) == 0) {
-					// connection closed
-					closeConn(&recvSock);
-					// check if socket was waiting for actions
-					map<int, PlayerRequest*>::iterator rIter = requestsWaitingSocks.find(connSocks[i]);
-					if (rIter != requestsWaitingSocks.end()) {
-						// mark as closed so it will get destroyed later when handlePlayerRequest() tries to send the new actions
-						rIter->second->sock = -1;
-						// remove
-						requestsWaitingSocks.erase(rIter);
-					}
-					continue;
+			if (FD_ISSET((*vIter)->sock, &sockSet)) {
+				checkSock.setSock((*vIter)->sock);
+				// try to read data
+				if (checkSock.recv(dummy) == 0) {
+					// connection has closed
+					checkSock.close();
+					boost::mutex::scoped_lock lock(mutexMissingPlayers);
+					// mark player as disconnected
+					(*vIter)->player->setDisconnected();
+					missingPlayers.push_back((*vIter)->player);
+					// remove from set
+					FD_CLR((*vIter)->sock, &sockSet);
+					(*vIter)->sock = -1;
+					openConnections.erase(vIter);
+					vIter--;
+					cout << "connection closed" << endl;
 				}
-				
-				// parsing request
-				HTTPrequest request(&rawRequest);
-				
-				// it's a player request
-				if (request.getUri() == "/player") {
-					handlePlayerRequest(&request, &recvSock);
-				// it's a request by the 7stroem server
-				} else if (request.getUri() == "/server") {
-					HTTPresponse response;
-					if (request.getGet("authcode") == authcode && handleServerRequest(&request)) {
-						response << "ok";
-					} else {
-						response << "error";
-					}
-					response.send(&recvSock);
-					closeConn(&recvSock);
-					
-				// unknown action
-				} else {
-					recvSock.send("unknown action");
-					closeConn(&recvSock);
-				}
-				
 				
 				// any reading sockets left to be processed
 				if (--ready <= 0) {
 					break;
 				}
 			}
+			
+		}
+
+	}
+	
+}
+
+// checks for missing players and removes them from their games if neccessary
+void Server::checkMissingPlayers() {
+	
+	vector<Player*>::iterator vIter;
+	
+	while (true) {
+		sleep(5);
+		boost::mutex::scoped_lock lock(mutexMissingPlayers);
+		// TODO: if player opens two connections and closes one he gets recognized as disconnected from both
+		for (vIter = missingPlayers.begin(); vIter != missingPlayers.end(); ++vIter) {
+			if ((*vIter)->isConnected()) {
+				missingPlayers.erase(vIter);
+				vIter--;
+			} else if ((*vIter)->isMissing()) {
+				missingPlayers.erase(vIter);
+				vIter--;
+				cout << "player disconnected" << endl;
+			}
 
 		}
 		
+	}
+}
+
+// handles an incoming connection after being accepted by the listening socket
+void Server::handleNewConnection(int sockNo) {
+
+	Socket recvSock;
+	recvSock.setSock(sockNo);
+	string rawRequest;
+	
+	// parsing request
+	recvSock.recv(rawRequest);
+	HTTPrequest request(&rawRequest);
+	
+	// it's a player request
+	if (request.getUri() == "/player") {
+		handlePlayerRequest(&request, &recvSock);
+	
+	// it's a request by the 7stroem server
+	} else if (request.getUri() == "/server") {
+		HTTPresponse response;
+		if (request.getGet("authcode") == authcode && handleServerRequest(&request)) {
+			response << "ok";
+		} else {
+			response << "error";
+		}
+		response.send(&recvSock);
+		recvSock.close();
+		
+	// unknown action
+	} else {
+		recvSock.send("unknown action");
+		recvSock.close();
 	}
 	
 }
@@ -127,7 +173,6 @@ void Server::start() {
 // handles requests from players
 void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 	
-	// TODO: direkt das player objekt zurückgeben und dann immer den funktionen übergeben. spart die suche im players container
 	Game* myGame;
 	int playerId = atoi(request->getGet("pId").c_str());
 	int gameId = atoi(request->getGet("gId").c_str());
@@ -141,9 +186,17 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 		return;
 	}
 	
+	// lock this game
+	boost::mutex::scoped_lock lock(myGame->mutex);
+	
 	string errorMsg;
-	// authenticate player
-	if (myGame->authenticate(playerId, request->getGet("authcode"))) {
+	// authenticate player and get its object
+	Player* tPlayer = myGame->authenticate(playerId, request->getGet("authcode"));
+	if (tPlayer != NULL) {
+		
+		// mark player as connected
+		tPlayer->setConnected();
+		
 		// responding to game request
 		string gameRequest = request->getGet("request");
 		
@@ -154,13 +207,15 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 			int since = atoi(request->getGet("since").c_str());
 			
 			// create request object
-			PlayerRequest* newRequest = new PlayerRequest(playerId, since, sock->getSock());
+			PlayerRequest* newRequest = new PlayerRequest(myGame, tPlayer, since, sock->getSock());
 			
 			// send actions if there are already new actions
-			if (!sendActions(myGame, newRequest)) {
+			if (!sendActions(newRequest)) {
 				// put player into waiting list and send actions later when they occur
 				myGame->requestsWaiting.push_back(newRequest);
-				requestsWaitingSocks[sock->getSock()] = newRequest;
+				boost::mutex::scoped_lock lock(mutexConn);
+				openConnections.push_back(newRequest);
+				
 			// actions already sent -> destroy request
 			} else {
 				delete newRequest;
@@ -170,7 +225,7 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 		// player performed an action
 		} else if (gameRequest == "registerAction") {
 			// register action
-			if (myGame->registerAction(playerId, request->getGet("action"), request->getGet("content"))) {
+			if (myGame->registerAction(tPlayer, request->getGet("action"), request->getGet("content"))) {
 				// success
 				HTTPresponse httpResponse;
 				JSONobject jsonResponse;
@@ -183,7 +238,7 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 				httpResponse.send(sock);
 				
 				// close and cleanup everything
-				closeConn(sock);
+				sock->close();
 				
 				// send new actions to waiting players
 				sendToWaiting(myGame);
@@ -216,12 +271,21 @@ void Server::sendToWaiting(Game* game) {
 	vector<PlayerRequest*>::iterator rIter;
 	for (rIter = game->requestsWaiting.begin(); rIter != game->requestsWaiting.end(); ++rIter) {
 		// check if connection is not closed
+		// TODO: abfolge checken
 		if ((*rIter)->sock > -1) {
+			
 			// connection still alive -> send new actions
-			sendActions(game, *rIter);
+			// make sure it doesn't interfere with checkConnections()
+			boost::mutex::scoped_lock lock(mutexConn);
+			sendActions(*rIter);
+			// remove from open connections list
+			(*rIter)->sock = -2;
+			
+		} else {
+			// destroy request
+			delete *rIter;
 		}
-		// destroy request
-		delete *rIter;
+
 	}
 	// remove everything from waiting list
 	game->requestsWaiting.clear();
@@ -258,14 +322,14 @@ bool Server::handleServerRequest(HTTPrequest* request) {
 }
 
 // send actions to players in waiting list
-bool Server::sendActions(Game* myGame, PlayerRequest* request) {
+bool Server::sendActions(PlayerRequest* request) {
 	
 	vector<Action*>::iterator aIter;
 	vector<Action*> *newActions;
 	pair<vector<Action*>, int> actions;
 	
 	// get all actions since since
-	actions = myGame->getActionsSince(request->playerId, request->since);
+	actions = request->game->getActionsSince(request->player, request->since);
 	// no new actions ?
 	if (actions.second-request->since < 1) {
 		// stop here - request gets on waiting list
@@ -299,11 +363,12 @@ bool Server::sendActions(Game* myGame, PlayerRequest* request) {
 	httpResponse << "game.registerActions(" + jsonResponse.str() + ");";
 	
 	// send response to player
+	Socket actionsSock;
 	actionsSock.setSock(request->sock);
 	httpResponse.send(&actionsSock);
 	
 	// close and cleanup everything
-	closeConn(&actionsSock);
+	actionsSock.close();
 	
 	return true;
 	
@@ -335,15 +400,5 @@ void Server::error(Socket* sock, string msg) {
 	rawResponse.send(sock);
 	
 	// close and cleanup everything
-	closeConn(sock);
-}
-
-// closes a connection and removes a socket from set
-void Server::closeConn(Socket* sock) {
-	// close connection
 	sock->close();
-	// remove from set
-	FD_CLR(sock->getSock(), &sockSet);
-	// reset socket number
-	connSocks[sock->getSock()] = -1;
 }

@@ -1,12 +1,12 @@
 #include <vector>
-#include <set>
-#include <string>
+#include <iostream>
 using namespace std;
 #include "player.h"
 
 // constructor
 Player::Player(int pId, string pAuthcode): PlayerId(pId), authcode(pAuthcode) {
 	strikes = 0;
+	setDisconnected();
 	newRound();
 }
 
@@ -128,4 +128,25 @@ void Player::win() {
 // return number of strikes
 int Player::getStrikes() {
 	return strikes;
+}
+
+// mark player as connected
+void Player::setConnected() {
+	connected = true;
+}
+
+// mark player as connected and note the time of his disconnection
+void Player::setDisconnected() {
+	connected = false;
+	lastSeen = time(NULL);
+}
+
+// just return connection state
+bool Player::isConnected() {
+	return connected;
+}
+
+// check if player is missing -> his last connection to the server was more than 5 seconds ago
+bool Player::isMissing() {
+	return (!connected && lastSeen + 5 < time(NULL));
 }
