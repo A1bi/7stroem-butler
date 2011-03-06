@@ -1,11 +1,11 @@
 #include <vector>
-#include <iostream>
 using namespace std;
 #include "player.h"
 
 // constructor
 Player::Player(int pId, string pAuthcode): PlayerId(pId), authcode(pAuthcode) {
 	strikes = 0;
+	connected = 1;
 	setDisconnected();
 	newRound();
 }
@@ -40,7 +40,7 @@ bool Player::fold() {
 // player lays a card on stack
 bool Player::layStack(Card *hCard) {
 	// already folded ?
-	if (folded) return false;
+	if (folded || !flipped) return false;
 	
 	// take card from hand
 	int del = hand.erase(hCard);
@@ -117,7 +117,6 @@ void Player::incStrikes(int newStrikes) {
 // player loses
 void Player::lose() {
 	incStrikes(calls);
-	newRound();
 }
 
 // player wins
@@ -132,21 +131,38 @@ int Player::getStrikes() {
 
 // mark player as connected
 void Player::setConnected() {
-	connected = true;
+	// increase count of clients that are connected
+	connected++;
 }
 
-// mark player as connected and note the time of his disconnection
+// mark player as disconnected and note the time of his disconnection
 void Player::setDisconnected() {
-	connected = false;
+	// decrease count of clients that are connected
+	connected--;
 	lastSeen = time(NULL);
 }
 
 // just return connection state
 bool Player::isConnected() {
-	return connected;
+	return (connected > 0);
 }
 
-// check if player is missing -> his last connection to the server was more than 5 seconds ago
+// check if player is missing
 bool Player::isMissing() {
-	return (!connected && lastSeen + 5 < time(NULL));
+	// the last connection to the server of any client was more than 5 seconds ago
+	return (connected < 1 && lastSeen + 5 < time(NULL));
+}
+
+// get cards in player's hand as string separated by a comma
+void Player::getHand(string cards[4]) {
+	int i = 0;
+	for (sCard::iterator cIter = hand.begin(); cIter != hand.end(); ++cIter) {
+		cards[i] = (*cIter)->getCardId();
+		i++;
+	}
+}
+
+// note that player has already seen his cards
+void Player::flipHand() {
+	flipped = true;
 }

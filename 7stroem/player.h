@@ -27,6 +27,9 @@ class Player {
 	void setDisconnected();
 	bool isConnected();
 	bool isMissing();
+	void newRound();
+	void getHand(string[4]);
+	void flipHand();
 	
 	private:
 	const int PlayerId;
@@ -35,13 +38,13 @@ class Player {
 	sCard hand;
 	vector<Card*> stack;
 	bool folded;
+	bool flipped;
 	int strikes;
 	int calls;
 	bool knocked;
-	bool connected;
+	int connected;
 	int lastSeen;
 	
-	void newRound();
 	void incStrikes(int newStrikes);
 
 };

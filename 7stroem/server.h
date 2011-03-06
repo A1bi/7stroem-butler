@@ -8,6 +8,7 @@
 #include "socket.h"
 #include "game.h"
 #include "httprequest.h"
+#include "json.h"
 using namespace std;
 
 class Server {
@@ -28,12 +29,12 @@ private:
 	bool handleServerRequest(HTTPrequest*);
 	bool sendActions(PlayerRequest*);
 	void sendToWaiting(Game*);
-	void error(Socket*, string = "");
+	void sendResponse(Socket* sock, JSONobject* response);
+	void sendError(Socket*, string = "", string = "");
 	bool createGame(int);
 	
 	// mutexes
 	boost::mutex mutexConn;
-	boost::mutex mutexMissingPlayers;
 	
 };
 

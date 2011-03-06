@@ -25,6 +25,21 @@ struct PlayerRequest {
 	PlayerRequest(Game* g, Player* p, int si, int so): game(g), player(p), since(si), sock(so) {}
 };
 
+class ActionExcept {
+public:
+	ActionExcept(string msg, string id = ""): errorId(id), errorMsg(msg) {}
+	string getErrorMsg() {
+		return errorMsg;
+	}
+	string getErrorId() {
+		return errorId;
+	}
+	
+private:
+	string errorId, errorMsg;
+	
+};
+
 class Game {
 	public:
 	// constructor: set gameId and create card deck
@@ -43,7 +58,7 @@ class Game {
 	int gameId;
 	// player list
 	map<int, Player*> players;
-	vPlayer activeRound, activeKnock;
+	vPlayer playersRound, playersSmallRound, activeKnock;
 	// whose turn is it, who did win last ?
 	vPlayer::iterator turn;
 	Player* lastWinner;
@@ -56,8 +71,9 @@ class Game {
 	// number of knocks players did in this round
 	int knocks;
 	int turns;
+	bool roundStarted;
 	Player* getPlayer(int playerId);
-	void notifyAction(string action, Player *aPlayer, string content = "");
+	void notifyAction(string action, Player *aPlayer = NULL, string content = "");
 	void giveCards();
 	void nextTurn();
 	void setTurn(Player *tPlayer);

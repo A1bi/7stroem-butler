@@ -1,5 +1,4 @@
 #include "server.h"
-#include "json.h"
 
 #include <iostream>
 
@@ -17,7 +16,6 @@ void Server::start() {
 	
 	// check connections and missing players periodically
 	boost::thread checkingConns(boost::bind(&Server::checkConnections, this));
-	boost::thread checkingMissing(boost::bind(&Server::checkMissingPlayers, this));
 	
 	// don't stop here - wait for listening thread
 	listening.join();
@@ -53,7 +51,11 @@ void Server::checkConnections() {
 	
 	while (true) {
 		
-		sleep(5);
+		sleep(3);
+		
+		// check if any players have to be removed
+		checkMissingPlayers();
+		
 		FD_ZERO(&sockSet);
 		sockMax = -1;
 		boost::mutex::scoped_lock lock(mutexConn);
@@ -88,7 +90,6 @@ void Server::checkConnections() {
 				if (checkSock.recv(dummy) == 0) {
 					// connection has closed
 					checkSock.close();
-					boost::mutex::scoped_lock lock(mutexMissingPlayers);
 					// mark player as disconnected
 					(*vIter)->player->setDisconnected();
 					missingPlayers.push_back((*vIter)->player);
@@ -116,24 +117,18 @@ void Server::checkConnections() {
 void Server::checkMissingPlayers() {
 	
 	vector<Player*>::iterator vIter;
-	
-	while (true) {
-		sleep(5);
-		boost::mutex::scoped_lock lock(mutexMissingPlayers);
-		// TODO: if player opens two connections and closes one he gets recognized as disconnected from both
-		for (vIter = missingPlayers.begin(); vIter != missingPlayers.end(); ++vIter) {
-			if ((*vIter)->isConnected()) {
-				missingPlayers.erase(vIter);
-				vIter--;
-			} else if ((*vIter)->isMissing()) {
-				missingPlayers.erase(vIter);
-				vIter--;
-				cout << "player disconnected" << endl;
-			}
-
+	for (vIter = missingPlayers.begin(); vIter != missingPlayers.end(); ++vIter) {
+		if ((*vIter)->isConnected()) {
+			missingPlayers.erase(vIter);
+			vIter--;
+		} else if ((*vIter)->isMissing()) {
+			missingPlayers.erase(vIter);
+			vIter--;
+			cout << "player disconnected" << endl;
 		}
-		
+
 	}
+		
 }
 
 // handles an incoming connection after being accepted by the listening socket
@@ -176,91 +171,99 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 	Game* myGame;
 	int playerId = atoi(request->getGet("pId").c_str());
 	int gameId = atoi(request->getGet("gId").c_str());
-	// get Game object
-	// check if there is a player with this id and authentication succeeded
-	if (games.count(gameId) == 1) {
-		myGame = games[gameId];
-	} else {
-		// game not found
-		error(sock, "game not found");
-		return;
-	}
 	
-	// lock this game
-	boost::mutex::scoped_lock lock(myGame->mutex);
-	
-	string errorMsg;
-	// authenticate player and get its object
-	Player* tPlayer = myGame->authenticate(playerId, request->getGet("authcode"));
-	if (tPlayer != NULL) {
+	try {
 		
-		// mark player as connected
-		tPlayer->setConnected();
-		
-		// responding to game request
-		string gameRequest = request->getGet("request");
-		
-		// player wants to get actions
-		if (gameRequest == "getActions") {
-			
-			// get since argument and check if not empty
-			int since = atoi(request->getGet("since").c_str());
-			
-			// create request object
-			PlayerRequest* newRequest = new PlayerRequest(myGame, tPlayer, since, sock->getSock());
-			
-			// send actions if there are already new actions
-			if (!sendActions(newRequest)) {
-				// put player into waiting list and send actions later when they occur
-				myGame->requestsWaiting.push_back(newRequest);
-				boost::mutex::scoped_lock lock(mutexConn);
-				openConnections.push_back(newRequest);
-				
-			// actions already sent -> destroy request
-			} else {
-				delete newRequest;
-			}
-			
-			
-		// player performed an action
-		} else if (gameRequest == "registerAction") {
-			// register action
-			if (myGame->registerAction(tPlayer, request->getGet("action"), request->getGet("content"))) {
-				// success
-				HTTPresponse httpResponse;
-				JSONobject jsonResponse;
-				
-				// prepare json response and add to body
-				jsonResponse.addChild("result", "ok");
-				httpResponse << "result = " + jsonResponse.str() + ";";
-				
-				// send response to player
-				httpResponse.send(sock);
-				
-				// close and cleanup everything
-				sock->close();
-				
-				// send new actions to waiting players
-				sendToWaiting(myGame);
-				
-			} else {
-				errorMsg = "unknown error while registering your action";
-			}
-			
-			
-		// unknown request -> close
+		// get Game object
+		// check if there is a player with this id and authentication succeeded
+		if (games.count(gameId) == 1) {
+			myGame = games[gameId];
 		} else {
-			errorMsg = "unknown request";
+			// game not found
+			throw "game not found";
 		}
 		
-	// authentication failed -> close
-	} else {
-		errorMsg = "authentication failed";
+		// lock this game
+		boost::mutex::scoped_lock lock(myGame->mutex);
+		
+		// authenticate player and get its object
+		Player* tPlayer = myGame->authenticate(playerId, request->getGet("authcode"));
+		if (tPlayer != NULL) {
+			
+			// responding to game request
+			string gameRequest = request->getGet("request");
+			
+			// player wants to get actions
+			if (gameRequest == "getActions") {
+				
+				// mark player as connected
+				tPlayer->setConnected();
+				
+				// get since argument and check if not empty
+				int since = atoi(request->getGet("since").c_str());
+				
+				// create request object
+				PlayerRequest* newRequest = new PlayerRequest(myGame, tPlayer, since, sock->getSock());
+				
+				// send actions if there are already new actions
+				if (!sendActions(newRequest)) {
+					// put player into waiting list and send actions later when they occur
+					myGame->requestsWaiting.push_back(newRequest);
+					boost::mutex::scoped_lock lock(mutexConn);
+					openConnections.push_back(newRequest);
+					
+				// actions already sent -> destroy request
+				} else {
+					delete newRequest;
+				}
+				
+				
+			// player performed an action
+			} else if (gameRequest == "registerAction") {
+				// register action
+				myGame->registerAction(tPlayer, request->getGet("action"), request->getGet("content"));
+				
+				// success
+				JSONobject jsonResponse;
+				// prepare json response and add to body
+				jsonResponse.addChild("result", "ok");
+				// if player flipped his hand we now have to send him his cards so he can see them
+				if (request->getGet("action") == "flipHand") {
+					JSONarray* jsonCards = jsonResponse.addArray("cards");
+					
+					string cards[4];
+					tPlayer->getHand(cards);
+					for (int i = 0; i < 4; i++) {
+						jsonCards->addChild(cards[i]);
+					}
+				}
+				
+				// send response
+				sendResponse(sock, &jsonResponse);
+				
+				if (request->getGet("action") != "flipHand") {
+					// send new actions to waiting players
+					sendToWaiting(myGame);
+				}
+				
+			// unknown request -> close
+			} else {
+				throw "unknown request";
+			}
+			
+		// authentication failed -> close
+		} else {
+			throw "authentication failed";
+		}
+		
 	}
-	
 	// some error occurred ?
-	if (!errorMsg.empty()) {
-		error(sock, errorMsg);
+	catch (string msg) {
+		sendError(sock, msg);
+	}
+	// action not allowed ?
+	catch (ActionExcept& e) {
+		sendError(sock, e.getErrorMsg(), e.getErrorId());
 	}
 	
 }
@@ -269,14 +272,13 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 void Server::sendToWaiting(Game* game) {
 	// notifying all waiting players of the new actions
 	vector<PlayerRequest*>::iterator rIter;
+	// make sure it doesn't interfere with checkConnections()
+	boost::mutex::scoped_lock lock(mutexConn);
 	for (rIter = game->requestsWaiting.begin(); rIter != game->requestsWaiting.end(); ++rIter) {
 		// check if connection is not closed
 		// TODO: abfolge checken
-		if ((*rIter)->sock > -1) {
-			
+		if (*rIter != NULL && (*rIter)->sock > -1) {
 			// connection still alive -> send new actions
-			// make sure it doesn't interfere with checkConnections()
-			boost::mutex::scoped_lock lock(mutexConn);
 			sendActions(*rIter);
 			// remove from open connections list
 			(*rIter)->sock = -2;
@@ -328,16 +330,17 @@ bool Server::sendActions(PlayerRequest* request) {
 	vector<Action*> *newActions;
 	pair<vector<Action*>, int> actions;
 	
-	// get all actions since since
+	// get all actions since given event number
 	actions = request->game->getActionsSince(request->player, request->since);
 	// no new actions ?
-	if (actions.second-request->since < 1) {
+	if (actions.second - request->since < 1) {
 		// stop here - request gets on waiting list
 		return false;
 	}
 	
 	// prepare response
 	JSONobject jsonResponse;
+	jsonResponse.addChild("result", "ok");
 	JSONarray* actionsArray = jsonResponse.addArray("actions");
 	
 	// go through all actions
@@ -345,9 +348,11 @@ bool Server::sendActions(PlayerRequest* request) {
 	for (aIter = newActions->begin(); aIter != newActions->end(); ++aIter) {
 		JSONobject* action = actionsArray->addObject();
 		action->addChild("action", (*aIter)->action);
-		stringstream pId;
-		pId << (*aIter)->player->getId();
-		action->addChild("player", pId.str());
+		if ((*aIter)->player != NULL) {
+			stringstream pId;
+			pId << (*aIter)->player->getId();
+			action->addChild("player", pId.str());
+		}
 		action->addChild("content", (*aIter)->content);
 	}
 	
@@ -356,19 +361,13 @@ bool Server::sendActions(PlayerRequest* request) {
 	lastAction << actions.second;
 	jsonResponse.addChild("lastAction", lastAction.str());
 	
-	// initiate http response
-	HTTPresponse httpResponse;
-	
-	// prepare json response and add to body
-	httpResponse << "game.registerActions(" + jsonResponse.str() + ");";
-	
 	// send response to player
 	Socket actionsSock;
 	actionsSock.setSock(request->sock);
-	httpResponse.send(&actionsSock);
+	sendResponse(&actionsSock, &jsonResponse);
 	
-	// close and cleanup everything
-	actionsSock.close();
+	// mark this player's client as disconnected
+	request->player->setDisconnected();
 	
 	return true;
 	
@@ -385,20 +384,29 @@ bool Server::createGame(int gameId) {
 	return false;
 }
 
-// send error back to client
-void Server::error(Socket* sock, string msg) {
-	// initiate http response
-	HTTPresponse rawResponse;
-	
-	// prepare json response and add to body
-	rawResponse << "an error occurred";
-	if (!msg.empty()) {
-		rawResponse << ": ";
-		rawResponse << msg;
-	}
+// send a response as a JSON object to player
+void Server::sendResponse(Socket* sock, JSONobject* response) {
+	// prepare reponse
+	HTTPresponse httpResponse;
+	httpResponse << "game.processResponse(" + response->str() + ");";
 	// send response to player
-	rawResponse.send(sock);
+	httpResponse.send(sock);
 	
 	// close and cleanup everything
 	sock->close();
+}
+
+// send error back to player
+void Server::sendError(Socket* sock, string msg, string id) {
+	
+	// success
+	JSONobject jsonResponse;
+	// prepare json response and add to body
+	jsonResponse.addChild("result", "error");
+	JSONobject* error = jsonResponse.addObject("error");
+	error->addChild("id", id);
+	error->addChild("message", msg);
+	
+	// send to player
+	sendResponse(sock, &jsonResponse);
 }
