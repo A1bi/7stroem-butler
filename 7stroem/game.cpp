@@ -4,8 +4,7 @@
 #include <vector>
 using namespace std;
 #include "game.h"
-
-// TODO: Exceptions und Fehlerausgabe als JSON!!
+#include <iostream>
 // TODO: notifyAction() für content als int überladen
 
 // constructor
@@ -69,10 +68,6 @@ void Game::startSmallRound() {
 		turn = playersSmallRound.begin();
 	}
 	
-	// initial turn ?
-	if (turn == playersSmallRound.end()) {
-		turn = playersSmallRound.begin();
-	}
 	turns = 1;
 	// new winner is now the player who is first
 	lastWinner = *turn;
@@ -118,7 +113,6 @@ bool Game::addPlayer(int playerId, string authcode) {
 	Player *newPlayer = new Player(playerId, authcode);
 	// insert into vector
 	players[playerId] = newPlayer;
-	playersSmallRound.push_back(newPlayer);
 	// register as action
 	notifyAction("playerJoined", newPlayer);
 	

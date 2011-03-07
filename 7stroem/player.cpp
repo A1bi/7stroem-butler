@@ -91,7 +91,7 @@ void Player::newRound() {
 // player knocks
 bool Player::knock() {
 	// player can only knock once and if he has less than 6 strikes
-	if (knocked || strikes > 6) {
+	if (knocked || strikes > 5) {
 		return false;
 	}
 	// also increase calls because he obviously has to call his own knock
