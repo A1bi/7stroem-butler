@@ -5,11 +5,14 @@
 #include <set>
 using namespace std;
 #include "card.h"
+#include "game.h"
+
+class Game;
 
 class Player {
 	public:
 	// constructor: set id of user and the code required to authenticate a user
-	Player(int pId, string pAuthcode);
+	Player(int, string, Game*);
 	bool authenticate(int pid, string authcode);
 	void giveCard(Card *givenCard);
 	bool layStack(Card *hCard);
@@ -22,19 +25,22 @@ class Player {
 	Card* cardFromHand(string cardId);
 	bool checkForSuit(Card* givenCard);
 	int getId();
+	Game* getGame();
 	int getStrikes();
 	void setConnected();
 	void setDisconnected();
 	bool isConnected();
 	bool isMissing();
 	void newRound();
+	void newSmallRound();
 	void getHand(string[4]);
 	void flipHand();
 	
 	private:
 	const int PlayerId;
-	typedef set<Card*> sCard;
 	const string authcode;
+	Game* const game;
+	typedef set<Card*> sCard;
 	sCard hand;
 	vector<Card*> stack;
 	bool folded;

@@ -5,10 +5,9 @@
 using namespace std;
 #include "game.h"
 #include <iostream>
-// TODO: notifyAction() für content als int überladen
 
 // constructor
-Game::Game() {
+Game::Game(int i) : gameId(i) {
 	// suits and numbers
 	char suits[4] = { 'd', 's', 'h', 'c' };
 	int numbers[8] = { 3, 4, 5, 6, 7, 8, 9, 10 };
@@ -24,6 +23,24 @@ Game::Game() {
 	possibleActions["call"] = 4;
 	possibleActions["knock"] = 3;
 	possibleActions["flipHand"] = 5;
+	roundStarted = false;
+}
+
+// destructor
+Game::~Game() {
+	// destroy all cards
+	for (vector<Card*>::iterator vIter = allCards.begin(); vIter != allCards.end(); ++vIter) {
+		delete *vIter;
+	}
+	// destroy all actions
+	for (vector<Action*>::iterator vIter = actions.begin(); vIter != actions.end(); ++vIter) {
+		delete *vIter;
+	}
+}
+
+// just return the id of this game
+int Game::getId() {
+	return gameId;
 }
 
 // start the game
@@ -37,7 +54,8 @@ void Game::start() {
 // start a round
 void Game::startRound() {
 	// add all players to playersRound
-	for (map<int, Player*>::iterator pIter = players.begin(); pIter != players.end(); ++pIter) {
+	for (vpPlayer::iterator pIter = players.begin(); pIter != players.end(); ++pIter) {
+		pIter->second->newRound();
 		playersRound.push_back(pIter->second);
 	}
 	// initial turn
@@ -48,13 +66,22 @@ void Game::startRound() {
 	startSmallRound();
 }
 
+// end a round
+void Game::endRound() {
+	// TODO: update credit
+	roundStarted = false;
+	// the only player left in round is the winner
+	Player* winner = playersRound.front();
+	notifyAction("roundEnded", winner);
+}
+
 // start a round
 void Game::startSmallRound() {
 	// before we reset we have to save the current turn's pointer so we can find the player afterwards
 	Player* oldTurn = *turn;
 	// add all players in this round to playersSmallRound
 	for (vPlayer::iterator pIter = playersRound.begin(); pIter != playersRound.end(); ++pIter) {
-		(*pIter)->newRound();
+		(*pIter)->newSmallRound();
 		if ((*pIter)->getStrikes() > 5) {
 			notifyAction("poor", *pIter);
 		}
@@ -83,14 +110,10 @@ void Game::endSmallRound() {
 	notifyAction("smallRoundEnded", lastWinner);
 	// reset to all players active
 	playersSmallRound.clear();
-	stringstream strikes;
 	
-	for (map<int, Player*>::iterator pIter = players.begin(); pIter != players.end(); ++pIter) {
+	for (vpPlayer::iterator pIter = players.begin(); pIter != players.end(); ++pIter) {
 		// notify new strike state
-		strikes << pIter->second->getStrikes();
-		notifyAction("strikes", pIter->second, strikes.str());
-		strikes.str("");
-		strikes.clear();
+		notifyAction("strikes", pIter->second, pIter->second->getStrikes());
 		
 		// player has 7 strikes -> out
 		if (pIter->second->getStrikes() > 6) {
@@ -100,23 +123,67 @@ void Game::endSmallRound() {
 		}
 	}
 	
-	startSmallRound();
+	if (playersRound.size() < 2) {
+		endRound();
+	} else {
+		startSmallRound();
+	}
+	
 }
 
 // adds player to players list
 bool Game::addPlayer(int playerId, string authcode) {
 	// check if player not yet added
-	if (players.find(playerId) != players.end()) {
+	if (getPlayer(playerId) != NULL) {
 		return false;
 	}
 	// create pointer to new Player object
-	Player *newPlayer = new Player(playerId, authcode);
+	Player *newPlayer = new Player(playerId, authcode, this);
 	// insert into vector
-	players[playerId] = newPlayer;
+	players.push_back(pPlayer(playerId, newPlayer));
 	// register as action
 	notifyAction("playerJoined", newPlayer);
 	
 	return true;
+}
+
+// removes player from game
+bool Game::removePlayer(Player* player) {
+	bool destroyGame = false;
+	vpPlayer::iterator pIter = find(players.begin(), players.end(), player->getId());
+	if (pIter == players.end()) {
+		// player not found
+		return false;
+	}
+	notifyAction("playerQuit", NULL, player->getId());
+	players.erase(pIter);
+	if (roundStarted) {
+		playersRound.erase(find(playersRound.begin(), playersRound.end(), player));
+		playersSmallRound.erase(find(playersSmallRound.begin(), playersSmallRound.end(), player));
+		// whole game has only one player left
+		if (players.size() < 2) {
+			// TODO: update player credit
+			notifyAction("finished", player);
+		// round has one player left
+		} else if (playersRound.size() < 2) {
+			//endRound();
+			cout << "runde beendet" << endl;
+		// small round has one player left
+		} else if (playersSmallRound.size() < 2) {
+			endSmallRound();
+		}
+		if (*turn == player) {
+			nextTurn();
+			notifyAction("turn", *turn);
+		}
+	}
+	// last player left -> destroy it
+	if (players.size() < 1) {
+		destroyGame = true;
+	}
+	delete player;
+	// returns true if the game has to be removed from game list in server.cpp
+	return destroyGame;
 }
 
 // register an action
@@ -147,12 +214,12 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 			if (tPlayer->fold()) {
 				notifyAction("folded", tPlayer);
 				// remove player from active knock
-				removePlayer(activeKnock, tPlayer);
+				removePlayerFromList(activeKnock, tPlayer);
 				
 				// save current turn for later
 				Player* oldTurn = *turn;
 				// remove player from active list
-				removePlayer(playersSmallRound, tPlayer);
+				removePlayerFromList(playersSmallRound, tPlayer);
 				if (playersSmallRound.size() == 1) {
 					// only one player left -> end round
 					lastWinner = playersSmallRound.front();
@@ -238,7 +305,7 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 		case 3: {
 			if (tPlayer->knock()) {
 				activeKnock = playersSmallRound;
-				removePlayer(activeKnock, tPlayer);
+				removePlayerFromList(activeKnock, tPlayer);
 				knocks++;
 				notifyAction("knocked", tPlayer);
 				return true;
@@ -250,7 +317,7 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 		case 4: {
 			// check if there is a knock to call and the player didn't do so already
 			if (!activeKnock.empty() && find(activeKnock.begin(), activeKnock.end(), tPlayer) != activeKnock.end()) {
-				removePlayer(activeKnock, tPlayer);
+				removePlayerFromList(activeKnock, tPlayer);
 				tPlayer->call();
 				notifyAction("called", tPlayer);
 				// all players have called ?
@@ -285,6 +352,17 @@ void Game::notifyAction(string action, Player *aPlayer, string content) {
 	// queue action
 	actions.push_back(newAction);
 }
+// same for integer content
+void Game::notifyAction(string action, Player *aPlayer, int content) {
+	// int to string
+	stringstream intContent;
+	intContent << content;
+	
+	Action *newAction = new Action(action, aPlayer, intContent.str());
+	// queue action
+	actions.push_back(newAction);
+}
+
 // TODO: überdenken: alle spieler kriegen ab sofort die gleichen actions geliefert, nur einmal also abrufen ?
 // get all actions since the given start up to the most recent
 pair<vector<Action*>, int> Game::getActionsSince(Player* tPlayer, int start) {
@@ -314,11 +392,12 @@ pair<vector<Action*>, int> Game::getActionsSince(Player* tPlayer, int start) {
 Player* Game::authenticate(int playerId, string authcode) {
 	// get Player object
 	Player* wantedPlayer = getPlayer(playerId);
+
 	// authentication succeeded ?
-	if (wantedPlayer->authenticate(playerId, authcode)) {
+	if (wantedPlayer != NULL && wantedPlayer->authenticate(playerId, authcode)) {
 		return wantedPlayer;
 	}
-	return NULL;
+	return wantedPlayer;
 }
 
 // give all players new randomly selected cards
@@ -353,18 +432,19 @@ void Game::setTurn(Player *tPlayer) {
 }
 
 // returns reference to Player object for given id
-Player* Game::getPlayer(int PlayerId) {
+Player* Game::getPlayer(int playerId) {
 	// check if there is a player with this id and authentication succeeded
-	if (players.count(PlayerId) == 1) {
+	vpPlayer::iterator pIter = find(players.begin(), players.end(), playerId);
+	if (pIter != players.end()) {
 		// return Player object
-		return players[PlayerId];
+		return pIter->second;
 	}
 	// not found
 	return NULL;
 }
 
 // remove player from vector
-bool Game::removePlayer(vPlayer &oPlayers, Player *delPlayer) {
+bool Game::removePlayerFromList(vPlayer &oPlayers, Player *delPlayer) {
 	vPlayer::iterator dPlayer = find(oPlayers.begin(), oPlayers.end(), delPlayer);
 	if (dPlayer != oPlayers.end()) {
 		oPlayers.erase(dPlayer);

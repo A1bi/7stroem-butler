@@ -61,15 +61,7 @@ void Server::checkConnections() {
 		boost::mutex::scoped_lock lock(mutexConn);
 		// create a socket set which contains all open connections
 		for (vIter = openConnections.begin(); vIter != openConnections.end(); ++vIter) {
-			// already closed by sendActions() ?
-			if ((*vIter)->sock == -2) {
-				// remove from list
-				delete *vIter;
-				openConnections.erase(vIter);
-				vIter--;
-				continue;
-			}
-			
+			// add to socket set
 			FD_SET((*vIter)->sock, &sockSet);
 			if ((*vIter)->sock > sockMax) {
 				sockMax = (*vIter)->sock;
@@ -95,9 +87,12 @@ void Server::checkConnections() {
 					missingPlayers.push_back((*vIter)->player);
 					// remove from set
 					FD_CLR((*vIter)->sock, &sockSet);
-					(*vIter)->sock = -1;
-					openConnections.erase(vIter);
-					vIter--;
+					// remove from request list
+					(*vIter)->game->requestsWaiting.erase(find((*vIter)->game->requestsWaiting.begin(), (*vIter)->game->requestsWaiting.end(), *vIter));
+					// destroy request object
+					delete *vIter;
+					// remove from open connections list
+					vIter = openConnections.erase(vIter)-1;
 					cout << "connection closed" << endl;
 				}
 				
@@ -119,12 +114,19 @@ void Server::checkMissingPlayers() {
 	vector<Player*>::iterator vIter;
 	for (vIter = missingPlayers.begin(); vIter != missingPlayers.end(); ++vIter) {
 		if ((*vIter)->isConnected()) {
-			missingPlayers.erase(vIter);
-			vIter--;
+			vIter = missingPlayers.erase(vIter)-1;
 		} else if ((*vIter)->isMissing()) {
-			missingPlayers.erase(vIter);
-			vIter--;
 			cout << "player disconnected" << endl;
+			Game* game = (*vIter)->getGame();
+			if (game->removePlayer(*vIter)) {
+				// no players left -> remove game
+				games.erase(game->getId());
+				// destroy object
+				delete game;
+			} else {
+				sendToWaiting(game);
+			}
+			vIter = missingPlayers.erase(vIter)-1;
 		}
 
 	}
@@ -207,9 +209,9 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 				
 				// send actions if there are already new actions
 				if (!sendActions(newRequest)) {
+					boost::mutex::scoped_lock lock(mutexConn);
 					// put player into waiting list and send actions later when they occur
 					myGame->requestsWaiting.push_back(newRequest);
-					boost::mutex::scoped_lock lock(mutexConn);
 					openConnections.push_back(newRequest);
 					
 				// actions already sent -> destroy request
@@ -258,8 +260,8 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 		
 	}
 	// some error occurred ?
-	catch (string msg) {
-		sendError(sock, msg);
+	catch (char* msg) {
+		sendError(sock, string(msg));
 	}
 	// action not allowed ?
 	catch (ActionExcept& e) {
@@ -275,19 +277,12 @@ void Server::sendToWaiting(Game* game) {
 	// make sure it doesn't interfere with checkConnections()
 	boost::mutex::scoped_lock lock(mutexConn);
 	for (rIter = game->requestsWaiting.begin(); rIter != game->requestsWaiting.end(); ++rIter) {
-		// check if connection is not closed
-		// TODO: abfolge checken
-		if (*rIter != NULL && (*rIter)->sock > -1) {
-			// connection still alive -> send new actions
-			sendActions(*rIter);
-			// remove from open connections list
-			(*rIter)->sock = -2;
-			
-		} else {
-			// destroy request
-			delete *rIter;
-		}
-
+		// send new actions
+		sendActions(*rIter);
+		// remove from open connections list
+		openConnections.erase(find(openConnections.begin(), openConnections.end(), *rIter));
+		// destroy request
+		delete *rIter;
 	}
 	// remove everything from waiting list
 	game->requestsWaiting.clear();
@@ -353,7 +348,13 @@ bool Server::sendActions(PlayerRequest* request) {
 			pId << (*aIter)->player->getId();
 			action->addChild("player", pId.str());
 		}
-		action->addChild("content", (*aIter)->content);
+		// player id may be stored in content because Player object is already destroyed
+		if ((*aIter)->player == NULL && (*aIter)->content != "") {
+			action->addChild("player", (*aIter)->content);
+		} else {
+			action->addChild("content", (*aIter)->content);
+		}
+		
 	}
 	
 	// conclude response with the number of the last action
@@ -377,7 +378,7 @@ bool Server::sendActions(PlayerRequest* request) {
 bool Server::createGame(int gameId) {
 	// check if game id not yet created
 	if (games.find(gameId) == games.end()) {
-		Game* newGame = new Game;
+		Game* newGame = new Game(gameId);
 		games[gameId] = newGame;
 		return true;
 	}

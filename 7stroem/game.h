@@ -10,18 +10,19 @@ using namespace std;
 #include "card.h"
 
 class Game;
+class Player;
 
 struct Action {
-	string action;
-	Player *player;
-	string content;
+	const string action;
+	Player* const player;
+	const string content;
 	Action(string nAction, Player *nPlayer = NULL, string nContent = ""): action(nAction), player(nPlayer), content(nContent) {}
 };
 
 struct PlayerRequest {
-	int since, sock;
-	Game* game;
-	Player* player;
+	const int since, sock;
+	Game* const game;
+	Player* const player;
 	PlayerRequest(Game* g, Player* p, int si, int so): game(g), player(p), since(si), sock(so) {}
 };
 
@@ -36,28 +37,41 @@ public:
 	}
 	
 private:
-	string errorId, errorMsg;
+	const string errorId, errorMsg;
 	
+};
+
+struct pPlayer {
+	int first;
+	Player* second;
+	pPlayer(int i, Player* p) : first(i), second(p) {}
+	bool operator == (int i) {
+		return (i == first);
+	}
 };
 
 class Game {
 	public:
-	// constructor: set gameId and create card deck
-	Game();
+	// constructor: set id and create card deck
+	Game(int);
+	~Game();
 	bool addPlayer(int playerId, string authcode);
+	bool removePlayer(Player* player);
 	Player* authenticate(int playerId, string authcode);
 	pair<vector<Action*>, int> getActionsSince(Player*, int start);
 	bool registerAction(Player*, string action, string content);
 	void start();
+	int getId();
 	vector<PlayerRequest*> requestsWaiting; // TODO: private machen!!
 	boost::mutex mutex;
 	
 	private:
 	typedef vector<Player*> vPlayer;
+	typedef vector<pPlayer> vpPlayer;
 	// contains id of game
-	int gameId;
+	const int gameId;
 	// player list
-	map<int, Player*> players;
+	vpPlayer players;
 	vPlayer playersRound, playersSmallRound, activeKnock;
 	// whose turn is it, who did win last ?
 	vPlayer::iterator turn;
@@ -74,14 +88,16 @@ class Game {
 	bool roundStarted;
 	Player* getPlayer(int playerId);
 	void notifyAction(string action, Player *aPlayer = NULL, string content = "");
+	void notifyAction(string action, Player *aPlayer, int content);
 	void giveCards();
 	void nextTurn();
 	void setTurn(Player *tPlayer);
 	void startRound();
 	void startSmallRound();
 	void endSmallRound();
-	bool removePlayer(vPlayer &oPlayers, Player *delPlayer);
-
+	void endRound();
+	bool removePlayerFromList(vPlayer &oPlayers, Player *delPlayer);
+	
 };
 
 #endif

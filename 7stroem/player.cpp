@@ -3,16 +3,19 @@ using namespace std;
 #include "player.h"
 
 // constructor
-Player::Player(int pId, string pAuthcode): PlayerId(pId), authcode(pAuthcode) {
-	strikes = 0;
+Player::Player(int i, string a, Game* g): PlayerId(i), authcode(a), game(g) {
 	connected = 1;
 	setDisconnected();
-	newRound();
 }
 
 // returns player id
 int Player::getId() {
 	return PlayerId;
+}
+
+// return game object this player belongs to
+Game* Player::getGame() {
+	return game;
 }
 
 // check if given authcode of the player is correct
@@ -76,8 +79,13 @@ bool Player::checkForSuit(Card *givenCard) {
 	return false;
 }
 
-//reset a few things when starting new round
+// reset strikes before a new round
 void Player::newRound() {
+	strikes = 0;
+}
+
+// reset a few things when starting new round
+void Player::newSmallRound() {
 	// erase all cards from (actually there shouldn't be any left)
 	hand.clear();
 	// erase all cards from stack
@@ -119,9 +127,10 @@ void Player::lose() {
 	incStrikes(calls);
 }
 
+// TODO: get rid of win()
 // player wins
 void Player::win() {
-	newRound();
+	newSmallRound();
 }
 
 // return number of strikes
