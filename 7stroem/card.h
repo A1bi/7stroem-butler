@@ -11,7 +11,7 @@ class Card {
 	Card(char nSuit, int nNumber): suit(nSuit), number(nNumber) {}
 	bool cmpSuitTo(Card *oCard);
 	char getSuit();
-	bool operator > (Card *c);
+	bool operator > (Card &c);
 	string getCardId();
 	
 	private:

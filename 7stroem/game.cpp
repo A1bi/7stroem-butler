@@ -276,7 +276,7 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 					// check if suit is equal to last winner and also number is higher
 					for (pIter = playersSmallRound.begin(); pIter != playersSmallRound.end(); ++pIter) {
 						if (*pIter != lastWinner) {
-							if (lastWinner->lastStack()->cmpSuitTo((*pIter)->lastStack()) && ((*pIter)->lastStack() > lastWinner->lastStack())) {
+							if ((*(*pIter)->lastStack()) > (*lastWinner->lastStack())) {
 								lastWinner = *pIter;
 							} else if (turns == 4) {
 								// last turn of small round -> player lost this round

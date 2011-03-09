@@ -25,11 +25,10 @@ string Card::getCardId() {
 	return cardId.str();
 }
 
-// overload > operator so we can easily compare the numbers of two cards
-bool Card::operator > (Card *c) {
-	if (number > c->number) {
+// overload > operator so we can easily compare two cards
+bool Card::operator > (Card &c) {
+	if (cmpSuitTo(&c) && number > c.number) {
 		return true;
-	} else {
-		return false;
-	}	
+	}
+	return false;	
 }
