@@ -158,24 +158,37 @@ bool Game::removePlayer(Player* player) {
 	notifyAction("playerQuit", NULL, player->getId());
 	players.erase(pIter);
 	if (roundStarted) {
+		bool newTurn = false;
+		if (*turn == player) {
+			nextTurn();
+			newTurn = true;
+		}
+		if (lastWinner == player) {
+			if (turn == playersSmallRound.end()) {
+				lastWinner = playersSmallRound.front();
+			} else {
+				lastWinner = *turn;
+			}
+		}
 		playersRound.erase(find(playersRound.begin(), playersRound.end(), player));
 		playersSmallRound.erase(find(playersSmallRound.begin(), playersSmallRound.end(), player));
 		// whole game has only one player left
 		if (players.size() < 2) {
 			// TODO: update player credit
+			cout << "spiel beendet" << endl;
 			notifyAction("finished", player);
 		// round has one player left
 		} else if (playersRound.size() < 2) {
-			//endRound();
+			endRound();
 			cout << "runde beendet" << endl;
 		// small round has one player left
 		} else if (playersSmallRound.size() < 2) {
+			cout << "kleine runde beendet" << endl;
 			endSmallRound();
-		}
-		if (*turn == player) {
-			nextTurn();
+		} else if (newTurn) {
 			notifyAction("turn", *turn);
 		}
+
 	}
 	// last player left -> destroy it
 	if (players.size() < 1) {
@@ -195,10 +208,15 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 		return true;
 	}
 	
-	// TODO: FIX: bad access vor spielbeginn
 	// not the player's turn ?
 	if (tPlayer != *turn && action != "flipHand") {
 		throw ActionExcept("not your turn");
+		return false;
+	}
+	
+	// open knock ?
+	if ((action == "layStack" || action == "knock") && !activeKnock.empty()) {
+		throw ActionExcept("there is an active knock");
 		return false;
 	}
 	
@@ -216,6 +234,7 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 				// remove player from active knock
 				removePlayerFromList(activeKnock, tPlayer);
 				
+				nextTurn();
 				// save current turn for later
 				Player* oldTurn = *turn;
 				// remove player from active list
@@ -228,14 +247,11 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 					
 				} else {
 					setTurn(oldTurn);
-					// it was this player's turn so we have to go to the next player
-					if (oldTurn == tPlayer) {
-						nextTurn();
-						notifyAction("turn", *turn);
-					}
+					notifyAction("turn", *turn);
 					// last winner is now the player next to this player
+					// TODO: fix this
 					if (lastWinner == tPlayer) {
-						if (turn == playersSmallRound.end()) {
+						if (turn+1 == playersSmallRound.end()) {
 							lastWinner = playersSmallRound.front();
 						} else {
 							lastWinner = *turn;
@@ -261,7 +277,7 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 			
 			// check if player laid a suit different to the leading although he has the correct suit in hand -> not permitted
 			if (tPlayer != lastWinner && !lastWinner->lastStack()->cmpSuitTo(lCard) && tPlayer->checkForSuit(lastWinner->lastStack())) {
-				throw ActionExcept("you got the right suit, admit it!", "admit");
+				throw ActionExcept("you have to admit", "admit");
 				return false;
 			}
 			
@@ -275,13 +291,12 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 					vPlayer::iterator pIter;
 					// check if suit is equal to last winner and also number is higher
 					for (pIter = playersSmallRound.begin(); pIter != playersSmallRound.end(); ++pIter) {
-						if (*pIter != lastWinner) {
-							if ((*(*pIter)->lastStack()) > (*lastWinner->lastStack())) {
-								lastWinner = *pIter;
-							} else if (turns == 4) {
-								// last turn of small round -> player lost this round
-								(*pIter)->lose();
-							}
+						if (*pIter == lastWinner) continue;
+						if ((*(*pIter)->lastStack()) > (*lastWinner->lastStack())) {
+							lastWinner = *pIter;
+						} else if (turns == 4) {
+							// last turn of small round -> player lost this round
+							(*pIter)->lose();
 						}
 					}
 					// it's last winner's turn
@@ -308,6 +323,8 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 				removePlayerFromList(activeKnock, tPlayer);
 				knocks++;
 				notifyAction("knocked", tPlayer);
+				nextTurn();
+				notifyAction("turn", *turn);
 				return true;
 			}
 			break;
@@ -320,11 +337,8 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 				removePlayerFromList(activeKnock, tPlayer);
 				tPlayer->call();
 				notifyAction("called", tPlayer);
-				// all players have called ?
-				if (activeKnock.empty()) {
-					// notify that the last knocking player can now take his turn
-					notifyAction("turn", *turn);
-				}
+				nextTurn();
+				notifyAction("turn", *turn);
 				return true;
 			}
 			break;
@@ -421,7 +435,7 @@ void Game::giveCards() {
 
 // it's the next player's turn
 void Game::nextTurn() {
-	if (++turn == playersSmallRound.end()) {
+	if (++turn >= playersSmallRound.end()) {
 		turn = playersSmallRound.begin();
 	}
 }
