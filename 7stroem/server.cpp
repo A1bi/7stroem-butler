@@ -88,7 +88,7 @@ void Server::checkConnections() {
 					// remove from set
 					FD_CLR((*vIter)->sock, &sockSet);
 					// remove from request list
-					(*vIter)->game->requestsWaiting.erase(find((*vIter)->game->requestsWaiting.begin(), (*vIter)->game->requestsWaiting.end(), *vIter));
+					(*vIter)->gameCon->requestsWaiting.erase(find((*vIter)->gameCon->requestsWaiting.begin(), (*vIter)->gameCon->requestsWaiting.end(), *vIter));
 					// destroy request object
 					delete *vIter;
 					// remove from open connections list
@@ -117,14 +117,16 @@ void Server::checkMissingPlayers() {
 			vIter = missingPlayers.erase(vIter)-1;
 		} else if ((*vIter)->isMissing()) {
 			cout << "player disconnected" << endl;
-			Game* game = (*vIter)->getGame();
+			// TODO: altaaa. das is nich gut!!
+			GameContainer* gameCon = games[(*vIter)->getGame()->getId()];
+			Game* game = gameCon->game;
 			if (game->removePlayer(*vIter)) {
 				// no players left -> remove game
 				games.erase(game->getId());
 				// destroy object
-				delete game;
+				delete gameCon;
 			} else {
-				sendToWaiting(game);
+				sendToWaiting(gameCon);
 			}
 			vIter = missingPlayers.erase(vIter)-1;
 		}
@@ -170,6 +172,7 @@ void Server::handleNewConnection(int sockNo) {
 // handles requests from players
 void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 	
+	GameContainer* myGameCon;
 	Game* myGame;
 	int playerId = atoi(request->getGet("pId").c_str());
 	int gameId = atoi(request->getGet("gId").c_str());
@@ -179,14 +182,16 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 		// get Game object
 		// check if there is a player with this id and authentication succeeded
 		if (games.count(gameId) == 1) {
-			myGame = games[gameId];
+			myGameCon = games[gameId];
+			myGame = myGameCon->game;
+			
 		} else {
 			// game not found
 			throw "game not found";
 		}
 		
 		// lock this game
-		boost::mutex::scoped_lock lock(myGame->mutex);
+		boost::mutex::scoped_lock lock(myGameCon->mutex);
 		
 		// authenticate player and get its object
 		Player* tPlayer = myGame->authenticate(playerId, request->getGet("authcode"));
@@ -205,13 +210,13 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 				int since = atoi(request->getGet("since").c_str());
 				
 				// create request object
-				PlayerRequest* newRequest = new PlayerRequest(myGame, tPlayer, since, sock->getSock());
+				PlayerRequest* newRequest = new PlayerRequest(myGameCon, tPlayer, since, sock->getSock());
 				
 				// send actions if there are already new actions
 				if (!sendActions(newRequest)) {
 					boost::mutex::scoped_lock lock(mutexConn);
 					// put player into waiting list and send actions later when they occur
-					myGame->requestsWaiting.push_back(newRequest);
+					myGameCon->requestsWaiting.push_back(newRequest);
 					openConnections.push_back(newRequest);
 					
 				// actions already sent -> destroy request
@@ -245,7 +250,7 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 				
 				if (request->getGet("action") != "flipHand") {
 					// send new actions to waiting players
-					sendToWaiting(myGame);
+					sendToWaiting(myGameCon);
 				}
 				
 			// unknown request -> close
@@ -271,12 +276,12 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 }
 
 // send all actions to waiting players
-void Server::sendToWaiting(Game* game) {
+void Server::sendToWaiting(GameContainer* gameCon) {
 	// notifying all waiting players of the new actions
 	vector<PlayerRequest*>::iterator rIter;
 	// make sure it doesn't interfere with checkConnections()
 	boost::mutex::scoped_lock lock(mutexConn);
-	for (rIter = game->requestsWaiting.begin(); rIter != game->requestsWaiting.end(); ++rIter) {
+	for (rIter = gameCon->requestsWaiting.begin(); rIter != gameCon->requestsWaiting.end(); ++rIter) {
 		// send new actions
 		sendActions(*rIter);
 		// remove from open connections list
@@ -285,7 +290,7 @@ void Server::sendToWaiting(Game* game) {
 		delete *rIter;
 	}
 	// remove everything from waiting list
-	game->requestsWaiting.clear();
+	gameCon->requestsWaiting.clear();
 }
 
 // handles requests from the remote 7stroem server
@@ -298,19 +303,19 @@ bool Server::handleServerRequest(HTTPrequest* request) {
 	// requests with game id
 	} else if (request->getGet("gId") != "") {
 		// get game
-		map<int, Game*>::iterator mIter = games.find( atoi(request->getGet("gId").c_str()) );
+		GameContainer* gameCon = games[ atoi(request->getGet("gId").c_str()) ];
 		// check if game exists
-		if (mIter != games.end()) {
+		if (gameCon != NULL) {
 			// register player
 			if (request->getGet("request") == "registerPlayer") {
-				if (request->getGet("pId") != "" && request->getGet("pAuthcode") != "" && mIter->second->addPlayer( atoi(request->getGet("pId").c_str()), request->getGet("pAuthcode") )) {
-					sendToWaiting(mIter->second);
+				if (request->getGet("pId") != "" && request->getGet("pAuthcode") != "" && gameCon->game->addPlayer( atoi(request->getGet("pId").c_str()), request->getGet("pAuthcode") )) {
+					sendToWaiting(gameCon);
 					return true;
 				}
 			// start game
 			} else if (request->getGet("request") == "startGame") {
-				mIter->second->start();
-				sendToWaiting(mIter->second);
+				gameCon->game->start();
+				sendToWaiting(gameCon);
 				return true;
 			}
 		}
@@ -326,7 +331,7 @@ bool Server::sendActions(PlayerRequest* request) {
 	pair<vector<Action*>, int> actions;
 	
 	// get all actions since given event number
-	actions = request->game->getActionsSince(request->player, request->since);
+	actions = request->gameCon->game->getActionsSince(request->player, request->since);
 	// no new actions ?
 	if (actions.second - request->since < 1) {
 		// stop here - request gets on waiting list
@@ -378,8 +383,7 @@ bool Server::sendActions(PlayerRequest* request) {
 bool Server::createGame(int gameId) {
 	// check if game id not yet created
 	if (games.find(gameId) == games.end()) {
-		Game* newGame = new Game(gameId);
-		games[gameId] = newGame;
+		games[gameId] = new GameContainer(gameId);
 		return true;
 	}
 	return false;

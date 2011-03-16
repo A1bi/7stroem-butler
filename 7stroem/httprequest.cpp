@@ -1,5 +1,4 @@
 #include <sstream>
-#include <iostream>
 #include "http.h"
 #include "httprequest.h"
 
@@ -91,10 +90,12 @@ string HTTPrequest::generateHeader() {
 	r << method << " " << uri << " HTTP/1.1\n";
 	// host line
 	r << "Host: " << host << endl;
-	
 	// header vars
 	r << generateHeaderVars();
-	
+	if (method == "POST") {
+		r << "Content-Type: application/x-www-form-urlencoded" << endl;
+		r << "Content-Length: " << body.size() << endl;
+	}
 	// add empty line before body
 	r << "\n";
 	
@@ -109,18 +110,23 @@ HTTPresponse* HTTPrequest::execute() {
 	Socket receiver;
 	if (!receiver.connect(host, 80)) {
 		// could not connect
-		return false;
+		return NULL;
 	}
 	
 	// generate header to send to server
-	string header = generateHeader();
+	string request = generateHeader();
+
+	// add body and replace last & with final break
+	request += body;
+	request.replace(request.size()-1, 1, "\n");
+
 	// send header and body
-	receiver.send(header);
+	receiver.send(request);
 	
 	// get response
 	string rawResponse;
 	// get the whole response (header and body) or only the first chunk of it if chunking is enabled by the server
-	receiver.recv(rawResponse);
+	int contentGot = receiver.recv(rawResponse);
 	stringstream responseStream;
 	responseStream << rawResponse;
 	
@@ -128,28 +134,24 @@ HTTPresponse* HTTPrequest::execute() {
 	HTTPresponse* response = new HTTPresponse(responseStream);
 	
 	string line;
-	
+
 	// got content-length -> check if we already received the complete body and try to get the rest if we didn't
 	if (response->getHeaderValue("Content-Length") != "") {
-		int contentGot = 0, contentLeft;
-		stringstream temp;
-		copyLines(response, responseStream, contentGot);
+		int contentLeft;
+		copyLines(response, &responseStream);
 		
 		// calculate content left to be received
-		temp << response->getHeaderValue("Content-Length");
-		temp >> contentLeft;
+		contentLeft = atoi(response->getHeaderValue("Content-Length").c_str());
+
 		while (true) {
 			contentLeft -= contentGot;
 			if (contentLeft > 0) {
-				receiver.recv(rawResponse, contentLeft);
+				contentGot = receiver.recv(rawResponse, contentLeft);
 			} else {
 				break;
 			}
-			cout << contentLeft << endl;
-			responseStream.str("");
-			responseStream.clear();
-			responseStream << rawResponse;
-			copyLines(response, responseStream, contentGot);
+			responseStream.str(rawResponse);
+			copyLines(response, &responseStream);
 		}
 		
 	
@@ -176,7 +178,7 @@ HTTPresponse* HTTPrequest::execute() {
 			}
 
 			// copy all lines of the body
-			copyLines(response, responseStream, chunkSizeGot);
+			copyLines(response, &responseStream);
 			// decrease because we need to ignore line feed from recv()
 			chunkSizeGot--;
 
@@ -190,17 +192,15 @@ HTTPresponse* HTTPrequest::execute() {
 			}
 
 			// receive rest of the chunk or the beginning of the next
-			receiver.recv(rawResponse, chunkSizeNext+2);
-			responseStream.str("");
-			responseStream.clear();
-			responseStream << rawResponse;
+			chunkSizeGot = receiver.recv(rawResponse, chunkSizeNext+2);
+			responseStream.str(rawResponse);
 
 		}
 		
 			
 	} else {
 		// is not chunked so just copy the body
-		copyLines(response, responseStream);
+		copyLines(response, &responseStream);
 	}
 	
 	
@@ -215,23 +215,25 @@ void HTTPrequest::setGet(string key, string value) {
 	get[key] = value;
 }
 
+void HTTPrequest::setPost(string key, string value) {
+	if (method != "POST") {
+		method = "POST";
+	}
+	body += key + "=" + urlEncode(value) + "&";
+}
+
 string HTTPrequest::getGet(string key) {
 	return get[key];
 }
 
-void HTTPrequest::copyLines(HTTPresponse* response, stringstream& lines) {
-	string line;
-	while (getline(lines, line)) {
-		line += "\n";
-		*response << line;
-	}
-}
+/*string HTTPrequest::getPost(string key) {
+	return post[key];
+}*/
 
-void HTTPrequest::copyLines(HTTPresponse* response, stringstream& lines, int& data) {
+void HTTPrequest::copyLines(HTTPresponse* response, stringstream* lines) {
 	string line;
-	while (getline(lines, line)) {
+	while (getline(*lines, line)) {
 		line += "\n";
 		*response << line;
-		data += line.size();
 	}
 }

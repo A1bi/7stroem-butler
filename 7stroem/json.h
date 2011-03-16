@@ -5,6 +5,7 @@
 #include <vector>
 using namespace std;
 
+// TODO: TEMPLAAAAATES du arsch
 // JSON generating stuff
 
 class JSONchild;
@@ -27,7 +28,6 @@ protected:
 	void pushChild(string, JSONchild*);
 	typedef vector<pair<string, JSONchild*> > vChildren;
 	vChildren children;
-
 	
 };
 

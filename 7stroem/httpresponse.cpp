@@ -1,7 +1,5 @@
-#include <sstream>
 #include "http.h"
 #include "httpresponse.h"
-#include <iostream>
 
 // generates response header
 string HTTPresponse::generateHeader() {
@@ -42,7 +40,6 @@ HTTPresponse::HTTPresponse(stringstream& data) {
 	
 	// parse the rest of the header
 	parseHeader(data);
-	
 }
 
 bool HTTPresponse::send(Socket* client) {
@@ -55,6 +52,6 @@ bool HTTPresponse::send(Socket* client) {
 }
 
 // copies the body into the given pointer
-void HTTPresponse::getBody(string& b) {
-	b = body;
+void HTTPresponse::getBody(string* const b) {
+	*b = body;
 }

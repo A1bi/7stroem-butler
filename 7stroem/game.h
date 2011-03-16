@@ -3,8 +3,6 @@
 #define _GAME_H_
 #include <string>
 #include <vector>
-#include <map>
-#include "boost/thread/thread.hpp"
 using namespace std;
 #include "player.h"
 #include "card.h"
@@ -17,13 +15,6 @@ struct Action {
 	Player* const player;
 	const string content;
 	Action(string nAction, Player *nPlayer = NULL, string nContent = ""): action(nAction), player(nPlayer), content(nContent) {}
-};
-
-struct PlayerRequest {
-	const int since, sock;
-	Game* const game;
-	Player* const player;
-	PlayerRequest(Game* g, Player* p, int si, int so): game(g), player(p), since(si), sock(so) {}
 };
 
 class ActionExcept {
@@ -62,8 +53,6 @@ class Game {
 	bool registerAction(Player*, string action, string content);
 	void start();
 	int getId();
-	vector<PlayerRequest*> requestsWaiting; // TODO: private machen!!
-	boost::mutex mutex;
 	
 	private:
 	typedef vector<Player*> vPlayer;
@@ -80,8 +69,6 @@ class Game {
 	vector<Action*> actions;
 	// array containing the whole card deck
 	vector<Card*> allCards;
-	// possible actions (workaround for switch)
-	map<string, int> possibleActions;
 	// number of knocks players did in this round
 	int knocks;
 	int turns;

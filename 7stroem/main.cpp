@@ -5,7 +5,7 @@ using namespace std;
 
 int main (int argc, char * const argv[]) {
 	
-	// example
+	// initiate server
 	Server myServer;
 	myServer.start();
 	

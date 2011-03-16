@@ -9,14 +9,36 @@
 #include "game.h"
 #include "httprequest.h"
 #include "json.h"
+#include "webapi.h"
 using namespace std;
+
+struct GameContainer;
+
+struct PlayerRequest {
+	const int since, sock;
+	GameContainer* const gameCon;
+	Player* const player;
+	PlayerRequest(GameContainer* g, Player* p, int si, int so): gameCon(g), player(p), since(si), sock(so) {}
+};
+
+struct GameContainer {
+	Game* const game;
+	vector<PlayerRequest*> requestsWaiting;
+	boost::mutex mutex;
+	
+	GameContainer(int id): game(new Game(id)) {}
+	~GameContainer() {
+		delete game;
+	}
+	
+};
 
 class Server {
 public:
 	void start();
 	
 private:
-	map<int, Game*> games;
+	map<int, GameContainer*> games;
 	vector<PlayerRequest*> openConnections;
 	vector<Player*> missingPlayers;
 	static const string authcode;
@@ -28,7 +50,7 @@ private:
 	void handlePlayerRequest(HTTPrequest*, Socket*);
 	bool handleServerRequest(HTTPrequest*);
 	bool sendActions(PlayerRequest*);
-	void sendToWaiting(Game*);
+	void sendToWaiting(GameContainer* gameCon);
 	void sendResponse(Socket* sock, JSONobject* response);
 	void sendError(Socket*, string = "", string = "");
 	bool createGame(int);

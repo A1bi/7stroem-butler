@@ -7,7 +7,7 @@ using namespace std;
 #include <iostream>
 
 // constructor
-Game::Game(int i) : gameId(i) {
+Game::Game(int i): gameId(i) {
 	// suits and numbers
 	char suits[4] = { 'd', 's', 'h', 'c' };
 	int numbers[8] = { 3, 4, 5, 6, 7, 8, 9, 10 };
@@ -18,11 +18,6 @@ Game::Game(int i) : gameId(i) {
 			allCards.push_back(newCard);
 		}
 	}
-	possibleActions["layStack"] = 2;
-	possibleActions["fold"] = 1;
-	possibleActions["call"] = 4;
-	possibleActions["knock"] = 3;
-	possibleActions["flipHand"] = 5;
 	roundStarted = false;
 }
 
@@ -220,139 +215,131 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 		return false;
 	}
 	
-	switch (possibleActions[action]) {
-			
-		// fold
-		case 1: {
-			// folding is only possible in an active knock
-			if (activeKnock.empty()) {
-				throw ActionExcept("no active knock");
-			}
-			// fold cards -> quit round
-			if (tPlayer->fold()) {
-				notifyAction("folded", tPlayer);
-				// remove player from active knock
-				removePlayerFromList(activeKnock, tPlayer);
-				
-				nextTurn();
-				// save current turn for later
-				Player* oldTurn = *turn;
-				// remove player from active list
-				removePlayerFromList(playersSmallRound, tPlayer);
-				if (playersSmallRound.size() == 1) {
-					// only one player left -> end round
-					lastWinner = playersSmallRound.front();
-					setTurn(lastWinner);
-					endSmallRound();
-					
-				} else {
-					setTurn(oldTurn);
-					notifyAction("turn", *turn);
-					// last winner is now the player next to this player
-					// TODO: fix this
-					if (lastWinner == tPlayer) {
-						if (turn+1 == playersSmallRound.end()) {
-							lastWinner = playersSmallRound.front();
-						} else {
-							lastWinner = *turn;
-						}
-					}
-				}
-				
-				return true;
-			}
-			// error -> already folded
-			throw ActionExcept("already folded");
-			break;
+	
+	// fold
+	if (action == "fold") {
+		// folding is only possible in an active knock
+		if (activeKnock.empty()) {
+			throw ActionExcept("no active knock");
 		}
+		// fold cards -> quit round
+		if (tPlayer->fold()) {
+			notifyAction("folded", tPlayer);
+			// remove player from active knock
+			removePlayerFromList(activeKnock, tPlayer);
 			
-		// layStack
-		case 2: {
-			// get Card object
-			Card* lCard = tPlayer->cardFromHand(content);
-			if (!lCard) {
-				throw ActionExcept("card not in your hand");
-				return false;
-			}
-			
-			// check if player laid a suit different to the leading although he has the correct suit in hand -> not permitted
-			if (tPlayer != lastWinner && !lastWinner->lastStack()->cmpSuitTo(lCard) && tPlayer->checkForSuit(lastWinner->lastStack())) {
-				throw ActionExcept("you have to admit", "admit");
-				return false;
-			}
-			
-			// try to lay the card on stack
-			if (tPlayer->layStack(lCard)) {
-				notifyAction("laidStack", tPlayer, lCard->getCardId());
-				nextTurn();
-				// small round complete
-				if (*turn == lastWinner) {
-					// check who won
-					vPlayer::iterator pIter;
-					// check if suit is equal to last winner and also number is higher
-					for (pIter = playersSmallRound.begin(); pIter != playersSmallRound.end(); ++pIter) {
-						if (*pIter == lastWinner) continue;
-						if ((*(*pIter)->lastStack()) > (*lastWinner->lastStack())) {
-							lastWinner = *pIter;
-						} else if (turns == 4) {
-							// last turn of small round -> player lost this round
-							(*pIter)->lose();
-						}
-					}
-					// it's last winner's turn
-					setTurn(lastWinner);
-					// it's now the player's turn who has won
-					if (turns == 4) {
-						endSmallRound();
+			nextTurn();
+			// save current turn for later
+			Player* oldTurn = *turn;
+			// remove player from active list
+			removePlayerFromList(playersSmallRound, tPlayer);
+			if (playersSmallRound.size() == 1) {
+				// only one player left -> end round
+				lastWinner = playersSmallRound.front();
+				setTurn(lastWinner);
+				endSmallRound();
+				
+			} else {
+				setTurn(oldTurn);
+				notifyAction("turn", *turn);
+				// last winner is now the player next to this player
+				// TODO: fix this
+				if (lastWinner == tPlayer) {
+					if (turn+1 == playersSmallRound.end()) {
+						lastWinner = playersSmallRound.front();
 					} else {
-						// next turn
-						turns++;
+						lastWinner = *turn;
 					}
-					
 				}
-				notifyAction("turn", *turn);
-				return true;
 			}
-			break;
-		}
 			
-		// knock
-		case 3: {
-			if (tPlayer->knock()) {
-				activeKnock = playersSmallRound;
-				removePlayerFromList(activeKnock, tPlayer);
-				knocks++;
-				notifyAction("knocked", tPlayer);
-				nextTurn();
-				notifyAction("turn", *turn);
-				return true;
-			}
-			break;
-		}
-			
-		// call
-		case 4: {
-			// check if there is a knock to call and the player didn't do so already
-			if (!activeKnock.empty() && find(activeKnock.begin(), activeKnock.end(), tPlayer) != activeKnock.end()) {
-				removePlayerFromList(activeKnock, tPlayer);
-				tPlayer->call();
-				notifyAction("called", tPlayer);
-				nextTurn();
-				notifyAction("turn", *turn);
-				return true;
-			}
-			break;
-		}
-			
-		// flipped hand
-		case 5: {
-			tPlayer->flipHand();
 			return true;
-			break;
 		}
-			
-			
+		// error -> already folded
+		throw ActionExcept("already folded");
+	
+	
+	// layStack
+	} else if (action == "layStack") {
+		// get Card object
+		Card* lCard = tPlayer->cardFromHand(content);
+		if (!lCard) {
+			throw ActionExcept("card not in your hand");
+			return false;
+		}
+		
+		// check if player laid a suit different to the leading although he has the correct suit in hand -> not permitted
+		if (tPlayer != lastWinner && !lastWinner->lastStack()->cmpSuitTo(lCard) && tPlayer->checkForSuit(lastWinner->lastStack())) {
+			throw ActionExcept("you have to admit", "admit");
+			return false;
+		}
+		
+		// try to lay the card on stack
+		if (tPlayer->layStack(lCard)) {
+			notifyAction("laidStack", tPlayer, lCard->getCardId());
+			nextTurn();
+			// small round complete
+			if (*turn == lastWinner) {
+				// check who won
+				vPlayer::iterator pIter;
+				// check if suit is equal to last winner and also number is higher
+				for (pIter = playersSmallRound.begin(); pIter != playersSmallRound.end(); ++pIter) {
+					if (*pIter == lastWinner) continue;
+					if ((*(*pIter)->lastStack()) > (*lastWinner->lastStack())) {
+						lastWinner = *pIter;
+					} else if (turns == 4) {
+						// last turn of small round -> player lost this round
+						(*pIter)->lose();
+					}
+				}
+				// it's last winner's turn
+				setTurn(lastWinner);
+				// it's now the player's turn who has won
+				if (turns == 4) {
+					endSmallRound();
+				} else {
+					// next turn
+					turns++;
+				}
+				
+			}
+			notifyAction("turn", *turn);
+			return true;
+		}
+
+	
+	// knock
+	} else if (action == "knock") {
+		if (tPlayer->knock()) {
+			activeKnock = playersSmallRound;
+			removePlayerFromList(activeKnock, tPlayer);
+			knocks++;
+			notifyAction("knocked", tPlayer);
+			nextTurn();
+			notifyAction("turn", *turn);
+			return true;
+		}
+
+	
+	// call
+	} else if (action == "call") {
+		// check if there is a knock to call and the player didn't do so already
+		if (!activeKnock.empty() && find(activeKnock.begin(), activeKnock.end(), tPlayer) != activeKnock.end()) {
+			removePlayerFromList(activeKnock, tPlayer);
+			tPlayer->call();
+			notifyAction("called", tPlayer);
+			nextTurn();
+			notifyAction("turn", *turn);
+			return true;
+		}
+
+	
+	// flipHand
+	} else if (action == "flipHand") {
+		tPlayer->flipHand();
+		return true;
 	}
+
 	
 	// not executed -> may not be permitted or possible
 	throw ActionExcept("unknown error");
@@ -402,7 +389,6 @@ pair<vector<Action*>, int> Game::getActionsSince(Player* tPlayer, int start) {
 }
 
 // authenticate player
-// TODO: access violation when trying to authenticate before games was started
 Player* Game::authenticate(int playerId, string authcode) {
 	// get Player object
 	Player* wantedPlayer = getPlayer(playerId);

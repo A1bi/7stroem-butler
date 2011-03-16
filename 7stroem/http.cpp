@@ -1,4 +1,3 @@
-#include <iostream>
 #include <sstream>
 #include "http.h"
 using namespace std;
@@ -90,4 +89,40 @@ string HTTP::generateHeaderVars() {
 		r << vIter->first << ": " << vIter->second << "\n";
 	}
 	return r.str();
+}
+
+string HTTP::urlEncode(const string &content) {
+	
+    string escaped;
+	const int max = content.length();
+	char digit, dig1, dig2;
+	
+	for (int i = 0; i < max; i++) {
+		digit = content[i];
+		
+		if ((48 <= digit && digit <= 57) || // 0-9
+			(65 <= digit && digit <= 90) || // ABC...XYZ
+			(97 <= digit && digit <= 122) || // abc...xyz
+			(digit == '~' || digit == '-' || digit == '_' || digit == '.')) {
+			escaped.append(&digit, 1);
+		
+		} else {
+			escaped += "%";
+			// convert char 255 to string "FF"
+			dig1 = (digit&0xF0) >> 4;
+			dig2 = (digit&0x0F);
+			
+			if (0 <= dig1 && dig1 <= 9) dig1 += 48;    // 0,48 in ascii
+			if (10 <= dig1 && dig1 <= 15) dig1 += 65-10; // A,65 in ascii
+			if (0 <= dig2 && dig2 <= 9) dig2 += 48;
+			if (10 <= dig2 && dig2 <= 15) dig2 += 65-10;
+			
+			escaped.append(&dig1, 1);
+			escaped.append(&dig2, 1);
+		}
+		
+	}
+	
+	return escaped;
+
 }

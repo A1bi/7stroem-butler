@@ -21,6 +21,9 @@ protected:
 	void parseHeader(stringstream&);
 	vector<string> rawCookies;
 	string generateHeaderVars();
+	string urlEncode(const string&);
+	// contains body after the header
+	string body;
 	
 };
 

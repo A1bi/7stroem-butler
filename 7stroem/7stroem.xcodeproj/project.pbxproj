@@ -7,10 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		61496D091319CFAE0090C388 /* libboost_thread-mt.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 61496D081319CFAE0090C388 /* libboost_thread-mt.dylib */; };
 		615C6D0312E4C516002AA2A0 /* httprequest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 615C6D0212E4C516002AA2A0 /* httprequest.cpp */; };
 		615C6D0612E4C5D2002AA2A0 /* httpresponse.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 615C6D0512E4C5D2002AA2A0 /* httpresponse.cpp */; };
 		6165A55F12FDA16200B0D734 /* json.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6165A55E12FDA16200B0D734 /* json.cpp */; };
 		6183BED112D38A4700D42893 /* http.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6183BED012D38A4700D42893 /* http.cpp */; };
+		61A62352133003B20095563A /* webapi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 61A62351133003B20095563A /* webapi.cpp */; };
 		61AC2ED212D1DE840089E48E /* game.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 61AC2ED112D1DE840089E48E /* game.cpp */; };
 		61AC2ED412D1DF0C0089E48E /* player.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 61AC2ED312D1DF0C0089E48E /* player.cpp */; };
 		61AC2ED612D1DF540089E48E /* card.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 61AC2ED512D1DF540089E48E /* card.cpp */; };
@@ -35,6 +37,7 @@
 
 /* Begin PBXFileReference section */
 		08FB7796FE84155DC02AAC07 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		61496D081319CFAE0090C388 /* libboost_thread-mt.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libboost_thread-mt.dylib"; path = "/opt/local/lib/libboost_thread-mt.dylib"; sourceTree = "<absolute>"; };
 		615C6D0112E4C516002AA2A0 /* httprequest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = httprequest.h; sourceTree = "<group>"; };
 		615C6D0212E4C516002AA2A0 /* httprequest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = httprequest.cpp; sourceTree = "<group>"; };
 		615C6D0412E4C5D2002AA2A0 /* httpresponse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = httpresponse.h; sourceTree = "<group>"; };
@@ -44,6 +47,8 @@
 		6182FF5612BC09790051FD81 /* card.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = card.h; sourceTree = "<group>"; };
 		6183BECF12D38A4700D42893 /* http.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = http.h; sourceTree = "<group>"; };
 		6183BED012D38A4700D42893 /* http.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = http.cpp; sourceTree = "<group>"; };
+		61A62350133003B20095563A /* webapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = webapi.h; sourceTree = "<group>"; };
+		61A62351133003B20095563A /* webapi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = webapi.cpp; sourceTree = "<group>"; };
 		61AC2ED112D1DE840089E48E /* game.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = game.cpp; sourceTree = "<group>"; };
 		61AC2ED312D1DF0C0089E48E /* player.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = player.cpp; sourceTree = "<group>"; };
 		61AC2ED512D1DF540089E48E /* card.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = card.cpp; sourceTree = "<group>"; };
@@ -62,6 +67,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				61496D091319CFAE0090C388 /* libboost_thread-mt.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -74,6 +80,7 @@
 				08FB7795FE84155DC02AAC07 /* Source */,
 				C6859E8C029090F304C91782 /* Documentation */,
 				1AB674ADFE9D54B511CA2CBB /* Products */,
+				61496D081319CFAE0090C388 /* libboost_thread-mt.dylib */,
 			);
 			name = eifelpoker;
 			sourceTree = "<group>";
@@ -89,10 +96,10 @@
 				61AC2ED112D1DE840089E48E /* game.cpp */,
 				61EDAFDB12B94952003A1229 /* player.h */,
 				61AC2ED312D1DF0C0089E48E /* player.cpp */,
-				6165A55D12FDA16200B0D734 /* json.h */,
-				6165A55E12FDA16200B0D734 /* json.cpp */,
 				61C7F9A2130098DE00603362 /* server.h */,
 				61C7F9A3130098DE00603362 /* server.cpp */,
+				61A62350133003B20095563A /* webapi.h */,
+				61A62351133003B20095563A /* webapi.cpp */,
 			);
 			name = Source;
 			sourceTree = "<group>";
@@ -108,14 +115,16 @@
 		610A821512E3B0D3001FC770 /* network */ = {
 			isa = PBXGroup;
 			children = (
-				61AC2EF812D1E7200089E48E /* socket.cpp */,
-				61AC2EF712D1E7200089E48E /* socket.h */,
-				6183BED012D38A4700D42893 /* http.cpp */,
 				6183BECF12D38A4700D42893 /* http.h */,
+				6183BED012D38A4700D42893 /* http.cpp */,
 				615C6D0112E4C516002AA2A0 /* httprequest.h */,
 				615C6D0212E4C516002AA2A0 /* httprequest.cpp */,
 				615C6D0412E4C5D2002AA2A0 /* httpresponse.h */,
 				615C6D0512E4C5D2002AA2A0 /* httpresponse.cpp */,
+				6165A55D12FDA16200B0D734 /* json.h */,
+				6165A55E12FDA16200B0D734 /* json.cpp */,
+				61AC2EF712D1E7200089E48E /* socket.h */,
+				61AC2EF812D1E7200089E48E /* socket.cpp */,
 			);
 			name = network;
 			sourceTree = "<group>";
@@ -188,6 +197,7 @@
 				615C6D0612E4C5D2002AA2A0 /* httpresponse.cpp in Sources */,
 				6165A55F12FDA16200B0D734 /* json.cpp in Sources */,
 				61C7F9A4130098DE00603362 /* server.cpp in Sources */,
+				61A62352133003B20095563A /* webapi.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -197,25 +207,33 @@
 		1DEB923208733DC60010E9CD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
+				ALWAYS_SEARCH_USER_PATHS = YES;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				COPY_PHASE_STRIP = NO;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 0;
+				HEADER_SEARCH_PATHS = /opt/local/include;
 				INSTALL_PATH = /usr/local/bin;
+				LIBRARY_SEARCH_PATHS = /opt/local/lib;
 				PRODUCT_NAME = 7stroem;
+				STANDARD_C_PLUS_PLUS_LIBRARY_TYPE = static;
 			};
 			name = Debug;
 		};
 		1DEB923308733DC60010E9CD /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
+				ALWAYS_SEARCH_USER_PATHS = YES;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_MODEL_TUNING = G5;
+				HEADER_SEARCH_PATHS = /opt/local/include;
 				INSTALL_PATH = /usr/local/bin;
+				LIBRARY_SEARCH_PATHS = /opt/local/lib;
 				PRODUCT_NAME = 7stroem;
+				STANDARD_C_PLUS_PLUS_LIBRARY_TYPE = static;
 			};
 			name = Release;
 		};

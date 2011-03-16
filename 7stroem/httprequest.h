@@ -12,21 +12,24 @@ using namespace std;
 class HTTPrequest : public HTTP {
 public:
 	HTTPrequest(string*);
-	HTTPrequest(string, string);
+	HTTPrequest(const string, const string);
 	HTTPresponse* execute();
 	string getGet(string);
 	void setGet(string, string);
+	void setPost(string, string);
+	//string getPost(string);
 	string getUri() {
 		return uri;
 	}
 	
 private:
 	// response status code
-	string method, uri, host;
+	string uri, host;
+	string method;
 	string generateHeader();
 	map<string, string> get;
-	void copyLines(HTTPresponse*, stringstream&);
-	void copyLines(HTTPresponse*, stringstream&, int&);
+	void copyLines(HTTPresponse*, stringstream*);
+	
 };
 
 #endif

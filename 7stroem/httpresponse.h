@@ -17,13 +17,11 @@ public:
 	int getStatus();
 	bool send(Socket*);
 	void operator << (string);
-	void getBody(string&);
+	void getBody(string* const);
 	
 private:
 	// response status code
 	unsigned int status;
-	// contains body after the header
-	string body;
 	string generateHeader();
 };
 
