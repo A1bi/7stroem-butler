@@ -42,6 +42,7 @@ private:
 	vector<PlayerRequest*> openConnections;
 	vector<Player*> missingPlayers;
 	static const string authcode;
+	WebAPI wAPI;
 	
 	void checkConnections();
 	void checkMissingPlayers();

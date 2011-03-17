@@ -12,8 +12,8 @@ class WebAPI {
 	void playerQuit(int, int);
 	
 	private:
-	void makeRequest(JSONobject*);
-	static const string serverAddr;
+	JSONobject makeRequest(JSONobject*, string);
+	static const string serverAddr, authcode;
 	
 };
 

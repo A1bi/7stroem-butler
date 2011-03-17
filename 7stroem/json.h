@@ -3,6 +3,7 @@
 #define _JSON_H_
 #include <string>
 #include <vector>
+#include "boost/regex.hpp"
 using namespace std;
 
 // TODO: TEMPLAAAAATES du arsch
@@ -18,11 +19,15 @@ protected:
 
 class JSONobject : public JSON {
 public:
-	void addChild(string, string);
-	JSONarray* addArray(string);
-	JSONobject* addObject(string);
-	string str(int = 0);
+	JSONobject() {};
+	JSONobject(string);
 	~JSONobject();
+	void addChild(string, string);
+	JSONarray* addArray(string, string = "");
+	JSONobject* addObject(string, string = "");
+	string str(int = 0);
+	string getChild(string);
+	JSONarray* getArray(string);
 	
 protected:
 	void pushChild(string, JSONchild*);
@@ -33,10 +38,13 @@ protected:
 
 class JSONarray : public JSON {
 public:
-	void addChild(string);
-	JSONobject* addObject();
-	string str(int = 0);
+	JSONarray() {};
+	JSONarray(string);
 	~JSONarray();
+	void addChild(string);
+	JSONobject* addObject(string = "");
+	string str(int = 0);
+	bool getChild(int, string*);
 	
 protected:
 	typedef vector<JSONchild*> vChildren;

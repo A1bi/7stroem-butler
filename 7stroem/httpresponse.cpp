@@ -5,7 +5,7 @@
 string HTTPresponse::generateHeader() {
 	stringstream r;
 	r << "HTTP/1.1 " << status << " OK\r\n";
-	r << "Server: 7stroem-Game-Butler/0.5 (Unix)\r\n";
+	r << "Server: 7stroem-Butler/0.5 (Unix)\r\n";
 	r << "Pragma: no-cache\r\n";
 	r << "Cache-Control: no-cache\r\n";
 	r << "Expires: 0\r\n";

@@ -19,6 +19,7 @@ Game::Game(int i): gameId(i) {
 		}
 	}
 	roundStarted = false;
+	started = false;
 }
 
 // destructor
@@ -40,6 +41,7 @@ int Game::getId() {
 
 // start the game
 void Game::start() {
+	started = true;
 	// notify game has started
 	notifyAction("started");
 	// start first round
@@ -127,10 +129,10 @@ void Game::endSmallRound() {
 }
 
 // adds player to players list
-bool Game::addPlayer(int playerId, string authcode) {
+Player* Game::addPlayer(int playerId, string authcode) {
 	// check if player not yet added
 	if (getPlayer(playerId) != NULL) {
-		return false;
+		return NULL;
 	}
 	// create pointer to new Player object
 	Player *newPlayer = new Player(playerId, authcode, this);
@@ -139,11 +141,12 @@ bool Game::addPlayer(int playerId, string authcode) {
 	// register as action
 	notifyAction("playerJoined", newPlayer);
 	
-	return true;
+	return newPlayer;
 }
 
 // removes player from game
 bool Game::removePlayer(Player* player) {
+	// TODO: change host player
 	bool destroyGame = false;
 	vpPlayer::iterator pIter = find(players.begin(), players.end(), player->getId());
 	if (pIter == players.end()) {
@@ -187,6 +190,7 @@ bool Game::removePlayer(Player* player) {
 	}
 	// last player left -> destroy it
 	if (players.size() < 1) {
+		cout << "spiel zerstört" << endl;
 		destroyGame = true;
 	}
 	delete player;
@@ -365,6 +369,7 @@ void Game::notifyAction(string action, Player *aPlayer, int content) {
 }
 
 // TODO: überdenken: alle spieler kriegen ab sofort die gleichen actions geliefert, nur einmal also abrufen ?
+// TODO: mach den ganzen since scheiß weg!
 // get all actions since the given start up to the most recent
 pair<vector<Action*>, int> Game::getActionsSince(Player* tPlayer, int start) {
 	vector<Action*> newActions;

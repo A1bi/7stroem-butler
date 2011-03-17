@@ -46,7 +46,7 @@ class Game {
 	// constructor: set id and create card deck
 	Game(int);
 	~Game();
-	bool addPlayer(int playerId, string authcode);
+	Player* addPlayer(int playerId, string authcode);
 	bool removePlayer(Player* player);
 	Player* authenticate(int playerId, string authcode);
 	pair<vector<Action*>, int> getActionsSince(Player*, int start);
@@ -72,7 +72,7 @@ class Game {
 	// number of knocks players did in this round
 	int knocks;
 	int turns;
-	bool roundStarted;
+	bool started, roundStarted;
 	Player* getPlayer(int playerId);
 	void notifyAction(string action, Player *aPlayer = NULL, string content = "");
 	void notifyAction(string action, Player *aPlayer, int content);

@@ -11,6 +11,26 @@ string JSON::getTabs(int depth) {
 
 
 // -- JSONobject --
+// parser
+JSONobject::JSONobject(const string rawObject) {
+	if (rawObject == "") return;
+	
+	const boost::regex pattern("\"(.+?)\": *((\"(.+?)\")|(\\{(.+?)\\})|(\\[(.+?)\\]))");
+	boost::smatch match;
+	string::const_iterator st1 = rawObject.begin(), st2 = rawObject.end();
+	
+	while (boost::regex_search(st1, st2, match, pattern)) {		
+		if (match[6] != "") {
+			addObject(match[1], match[6]);
+		} else if (match[8] != "") {
+			addArray(match[1], match[8]);
+		} else if (match[4] != "") {
+			addChild(match[1], match[4]);
+		}
+		st1 = match[0].second;
+	}
+}
+
 // add child
 void JSONobject::addChild(string key, string value) {
 	// create child
@@ -22,9 +42,9 @@ void JSONobject::addChild(string key, string value) {
 }
 
 // add array
-JSONarray* JSONobject::addArray(string key) {
+JSONarray* JSONobject::addArray(string key, string content) {
 	// create json array
-	JSONarray* array = new JSONarray;
+	JSONarray* array = new JSONarray(content);
 	JSONchild* child = new JSONchild;
 	// assign pointer to object
 	child->array = array;
@@ -34,9 +54,9 @@ JSONarray* JSONobject::addArray(string key) {
 }
 
 // add json object
-JSONobject* JSONobject::addObject(string key) {
+JSONobject* JSONobject::addObject(string key, string content) {
 	// create object pointer
-	JSONobject* object = new JSONobject;
+	JSONobject* object = new JSONobject(content);
 	JSONchild* child = new JSONchild;
 	// assign pointer
 	child->object = object;
@@ -87,6 +107,30 @@ string JSONobject::str(int depth) {
 	return JSONstr;
 }
 
+// return a string child specified by key
+string JSONobject::getChild(string key) {
+	vChildren::iterator vIter;
+	for (vIter = children.begin(); vIter != children.end(); ++vIter) {
+		if (vIter->first == key) {
+			return vIter->second->value;
+			break;
+		}
+	}
+	return "";
+}
+
+// return an array child specified by key
+JSONarray* JSONobject::getArray(string key) {
+	vChildren::iterator vIter;
+	for (vIter = children.begin(); vIter != children.end(); ++vIter) {
+		if (vIter->first == key) {
+			return vIter->second->array;
+			break;
+		}
+	}
+	return NULL;
+}
+
 // pushes child into vector
 void JSONobject::pushChild(string key, JSONchild* child) {
 	// create a pair which stores key and JSONchild object
@@ -112,6 +156,24 @@ JSONobject::~JSONobject() {
 // -- JSONarray --
 // the only difference to JSONobject is the lack of a key for each child
 // for the rest have a look at the comments from JSONobject above
+JSONarray::JSONarray(string rawObject) {
+	if (rawObject == "") return;
+	
+	// file pattern
+	const boost::regex pattern("((\"(.+?)\")|(\\{(.+?)\\}))");
+	boost::smatch match;
+	string::const_iterator st1 = rawObject.begin(), st2 = rawObject.end();
+	
+	while (boost::regex_search(st1, st2, match, pattern)) {
+		if (match[5] != "") {
+			addObject(match[5]);
+		} else if (match[3] != "") {
+			addChild(match[3]);
+		}
+		st1 = match[0].second;
+	}
+}
+
 string JSONarray::str(int depth) {
 	string JSONstr = "[";
 	depth++;
@@ -143,13 +205,24 @@ void JSONarray::addChild(string value) {
 }
 
 // add object
-JSONobject* JSONarray::addObject() {
-	JSONobject* object = new JSONobject;
+JSONobject* JSONarray::addObject(string content) {
+	JSONobject* object = new JSONobject(content);
 	JSONchild* child = new JSONchild;
 	child->object = object;
 	children.push_back(child);
 	
 	return object;
+}
+
+// return a child specified by position
+bool JSONarray::getChild(int i, string* value) {
+	try {
+		*value = children.at(i)->value;
+		return true;
+	}
+	catch (...) {
+		return false;
+	}
 }
 
 // destructor

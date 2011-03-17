@@ -113,16 +113,29 @@ void Server::checkMissingPlayers() {
 	
 	vector<Player*>::iterator vIter;
 	for (vIter = missingPlayers.begin(); vIter != missingPlayers.end(); ++vIter) {
+		// is connected again
 		if ((*vIter)->isConnected()) {
 			vIter = missingPlayers.erase(vIter)-1;
+		
+		// is completely disconnected
 		} else if ((*vIter)->isMissing()) {
 			cout << "player disconnected" << endl;
 			// TODO: altaaa. das is nich gut!!
 			GameContainer* gameCon = games[(*vIter)->getGame()->getId()];
 			Game* game = gameCon->game;
+			
+			// lock mutex
+			boost::mutex::scoped_lock lock(gameCon->mutex);
+			
+			// TODO: am besten objekt übergeben und nich die id
+			// notify web server and database
+			wAPI.playerQuit(game->getId(), (*vIter)->getId());
+			
 			if (game->removePlayer(*vIter)) {
 				// no players left -> remove game
 				games.erase(game->getId());
+				// unlock mutex before destroying the object
+				lock.unlock();
 				// destroy object
 				delete gameCon;
 			} else {
@@ -308,7 +321,15 @@ bool Server::handleServerRequest(HTTPrequest* request) {
 		if (gameCon != NULL) {
 			// register player
 			if (request->getGet("request") == "registerPlayer") {
-				if (request->getGet("pId") != "" && request->getGet("pAuthcode") != "" && gameCon->game->addPlayer( atoi(request->getGet("pId").c_str()), request->getGet("pAuthcode") )) {
+				if (request->getGet("pId") != "" && request->getGet("pAuthcode") != "") {
+					Player* newPlayer = gameCon->game->addPlayer( atoi(request->getGet("pId").c_str()), request->getGet("pAuthcode") );
+					if (newPlayer == NULL) {
+						return false;
+					}
+					// add to missing list - the player might never connect in the first place
+					boost::mutex::scoped_lock lock(mutexConn);
+					missingPlayers.push_back(newPlayer);
+					lock.unlock();
 					sendToWaiting(gameCon);
 					return true;
 				}
