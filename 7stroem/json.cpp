@@ -216,13 +216,12 @@ JSONobject* JSONarray::addObject(string content) {
 
 // return a child specified by position
 bool JSONarray::getChild(int i, string* value) {
-	try {
-		*value = children.at(i)->value;
-		return true;
-	}
-	catch (...) {
+	// check if not out of range
+	if (i >= children.size()) {
 		return false;
 	}
+	*value = children.at(i)->value;
+	return true;
 }
 
 // destructor

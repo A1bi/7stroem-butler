@@ -4,17 +4,16 @@
 #include <string>
 #include <vector>
 using namespace std;
-#include "player.h"
 #include "card.h"
+#include "player.h"
+#include "webapi.h"
 
-class Game;
-class Player;
 
 struct Action {
 	const string action;
-	Player* const player;
+	const int player;
 	const string content;
-	Action(string nAction, Player *nPlayer = NULL, string nContent = ""): action(nAction), player(nPlayer), content(nContent) {}
+	Action(string nAction, Player* aPlayer, string nContent): action(nAction), player((aPlayer == NULL) ? 0 : aPlayer->getId()), content(nContent) {}
 };
 
 class ActionExcept {
@@ -44,24 +43,29 @@ struct pPlayer {
 class Game {
 	public:
 	// constructor: set id and create card deck
-	Game(int);
+	Game(int, int);
 	~Game();
 	Player* addPlayer(int playerId, string authcode);
 	bool removePlayer(Player* player);
 	Player* authenticate(int playerId, string authcode);
-	pair<vector<Action*>, int> getActionsSince(Player*, int start);
+	void getActionsSince(pair<vector<Action*>, int>*);
 	bool registerAction(Player*, string action, string content);
 	void start();
 	int getId();
+	int getHost() {
+		return host;
+	}
 	
 	private:
 	typedef vector<Player*> vPlayer;
 	typedef vector<pPlayer> vpPlayer;
 	// contains id of game
 	const int gameId;
+	int host;
 	// player list
 	vpPlayer players;
 	vPlayer playersRound, playersSmallRound, activeKnock;
+	int origPlayers;
 	// whose turn is it, who did win last ?
 	vPlayer::iterator turn;
 	Player* lastWinner;
@@ -73,6 +77,8 @@ class Game {
 	int knocks;
 	int turns;
 	bool started, roundStarted;
+	WebAPI wAPI;
+	
 	Player* getPlayer(int playerId);
 	void notifyAction(string action, Player *aPlayer = NULL, string content = "");
 	void notifyAction(string action, Player *aPlayer, int content);

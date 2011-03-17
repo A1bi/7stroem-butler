@@ -1,13 +1,11 @@
-#include <string>
 #include <sstream>
 #include <map>
-#include <vector>
 using namespace std;
 #include "game.h"
 #include <iostream>
 
 // constructor
-Game::Game(int i): gameId(i) {
+Game::Game(int i, int h): gameId(i), host(h), wAPI(this) {
 	// suits and numbers
 	char suits[4] = { 'd', 's', 'h', 'c' };
 	int numbers[8] = { 3, 4, 5, 6, 7, 8, 9, 10 };
@@ -20,6 +18,7 @@ Game::Game(int i): gameId(i) {
 	}
 	roundStarted = false;
 	started = false;
+	//WebAPI wAPI(this);
 }
 
 // destructor
@@ -42,7 +41,9 @@ int Game::getId() {
 // start the game
 void Game::start() {
 	started = true;
-	// notify game has started
+	// notify web server
+	wAPI.startGame();
+	// notify players
 	notifyAction("started");
 	// start first round
 	startRound();
@@ -58,6 +59,9 @@ void Game::startRound() {
 	// initial turn
 	turn = playersRound.end()-1;
 	roundStarted = true;
+	origPlayers = playersRound.size();
+	// web server
+	wAPI.roundStarted();
 	// notify that round has started
 	notifyAction("roundStarted");
 	startSmallRound();
@@ -65,10 +69,11 @@ void Game::startRound() {
 
 // end a round
 void Game::endRound() {
-	// TODO: update credit
 	roundStarted = false;
 	// the only player left in round is the winner
 	Player* winner = playersRound.front();
+	// web server
+	wAPI.roundEnded(winner, origPlayers);
 	notifyAction("roundEnded", winner);
 }
 
@@ -146,51 +151,68 @@ Player* Game::addPlayer(int playerId, string authcode) {
 
 // removes player from game
 bool Game::removePlayer(Player* player) {
-	// TODO: change host player
 	bool destroyGame = false;
 	vpPlayer::iterator pIter = find(players.begin(), players.end(), player->getId());
 	if (pIter == players.end()) {
 		// player not found
 		return false;
 	}
-	notifyAction("playerQuit", NULL, player->getId());
+	
+	// notify web server and database
+	wAPI.playerQuit(player);
+	notifyAction("playerQuit", player);
 	players.erase(pIter);
+	
+	// check if host has to be changed
+	if (host == player->getId()) {
+		pPlayer* newHost = &(players.front());
+		host = newHost->first;
+		notifyAction("hostChanged", newHost->second);
+		wAPI.changeHost();
+	}
+	
 	if (roundStarted) {
-		bool newTurn = false;
-		if (*turn == player) {
-			nextTurn();
-			newTurn = true;
-		}
-		if (lastWinner == player) {
-			if (turn == playersSmallRound.end()) {
-				lastWinner = playersSmallRound.front();
-			} else {
-				lastWinner = *turn;
-			}
-		}
-		playersRound.erase(find(playersRound.begin(), playersRound.end(), player));
-		playersSmallRound.erase(find(playersSmallRound.begin(), playersSmallRound.end(), player));
 		// whole game has only one player left
 		if (players.size() < 2) {
-			// TODO: update player credit
 			cout << "spiel beendet" << endl;
+			// notify web server
+			wAPI.roundEnded(players.front().second, origPlayers);
 			notifyAction("finished", player);
-		// round has one player left
-		} else if (playersRound.size() < 2) {
-			endRound();
-			cout << "runde beendet" << endl;
-		// small round has one player left
-		} else if (playersSmallRound.size() < 2) {
-			cout << "kleine runde beendet" << endl;
-			endSmallRound();
-		} else if (newTurn) {
-			notifyAction("turn", *turn);
+			destroyGame = true;
+		
+		} else {
+			bool newTurn = false;
+			if (*turn == player) {
+				nextTurn();
+				newTurn = true;
+			}
+			if (lastWinner == player) {
+				if (turn == playersSmallRound.end()) {
+					lastWinner = playersSmallRound.front();
+				} else {
+					lastWinner = *turn;
+				}
+			}
+			playersRound.erase(find(playersRound.begin(), playersRound.end(), player));
+			playersSmallRound.erase(find(playersSmallRound.begin(), playersSmallRound.end(), player));
+			// round has one player left
+			if (playersRound.size() < 2) {
+				endRound();
+				cout << "runde beendet" << endl;
+			// small round has one player left
+			} else if (playersSmallRound.size() < 2) {
+				cout << "kleine runde beendet" << endl;
+				endSmallRound();
+			} else if (newTurn) {
+				notifyAction("turn", *turn);
+			}
 		}
 
 	}
 	// last player left -> destroy it
-	if (players.size() < 1) {
+	if (players.size() < 1 || destroyGame) {
 		cout << "spiel zerstört" << endl;
+		wAPI.finishGame();
 		destroyGame = true;
 	}
 	delete player;
@@ -368,29 +390,28 @@ void Game::notifyAction(string action, Player *aPlayer, int content) {
 	actions.push_back(newAction);
 }
 
-// TODO: überdenken: alle spieler kriegen ab sofort die gleichen actions geliefert, nur einmal also abrufen ?
-// TODO: mach den ganzen since scheiß weg!
 // get all actions since the given start up to the most recent
-pair<vector<Action*>, int> Game::getActionsSince(Player* tPlayer, int start) {
-	vector<Action*> newActions;
-	int i = 0;
+void Game::getActionsSince(pair<vector<Action*>, int>* pActions) {
+	int i = 0, start = pActions->second;
 	
-	if (start >= 0 && tPlayer) {
+	if (start >= 0) {
 		// check if the start is higher than possible
 		if (start > actions.size()) {
 			start = actions.size();
+			return;
 		}
 		
 		// copy all the actions in the specific range into the new var
 		vector<Action*>::iterator aIter;
 		for (aIter = actions.begin()+start; aIter != actions.end(); ++aIter) {
-			newActions.push_back(actions[start+i]);
+			pActions->first.push_back(actions[start+i]);
 			i++;
 		}
 		
 	}
 	
-	return pair<vector<Action*>, int>(newActions, start+i);
+	// update start in pair
+	pActions->second = start+i;
 }
 
 // authenticate player

@@ -61,6 +61,12 @@ void Server::checkConnections() {
 		boost::mutex::scoped_lock lock(mutexConn);
 		// create a socket set which contains all open connections
 		for (vIter = openConnections.begin(); vIter != openConnections.end(); ++vIter) {
+			// first check if pointers are still valid (may have been deleted after a player was removed)
+			if ((*vIter)->gameCon == NULL || (*vIter)->player == NULL) {
+				vIter = openConnections.erase(vIter)-1;
+				continue;
+			}
+			
 			// add to socket set
 			FD_SET((*vIter)->sock, &sockSet);
 			if ((*vIter)->sock > sockMax) {
@@ -113,6 +119,12 @@ void Server::checkMissingPlayers() {
 	
 	vector<Player*>::iterator vIter;
 	for (vIter = missingPlayers.begin(); vIter != missingPlayers.end(); ++vIter) {
+		// check if still valid
+		if (*vIter == NULL) {
+			vIter = missingPlayers.erase(vIter)-1;
+			continue;
+		}
+		
 		// is connected again
 		if ((*vIter)->isConnected()) {
 			vIter = missingPlayers.erase(vIter)-1;
@@ -127,13 +139,10 @@ void Server::checkMissingPlayers() {
 			// lock mutex
 			boost::mutex::scoped_lock lock(gameCon->mutex);
 			
-			// TODO: am besten objekt übergeben und nich die id
-			// notify web server and database
-			wAPI.playerQuit(game->getId(), (*vIter)->getId());
-			
 			if (game->removePlayer(*vIter)) {
 				// no players left -> remove game
 				games.erase(game->getId());
+				sendToWaiting(gameCon);
 				// unlock mutex before destroying the object
 				lock.unlock();
 				// destroy object
@@ -141,6 +150,7 @@ void Server::checkMissingPlayers() {
 			} else {
 				sendToWaiting(gameCon);
 			}
+			
 			vIter = missingPlayers.erase(vIter)-1;
 		}
 
@@ -218,10 +228,8 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 				
 				// mark player as connected
 				tPlayer->setConnected();
-				
 				// get since argument and check if not empty
 				int since = atoi(request->getGet("since").c_str());
-				
 				// create request object
 				PlayerRequest* newRequest = new PlayerRequest(myGameCon, tPlayer, since, sock->getSock());
 				
@@ -239,32 +247,45 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 				
 				
 			// player performed an action
-			} else if (gameRequest == "registerAction") {
-				// register action
-				myGame->registerAction(tPlayer, request->getGet("action"), request->getGet("content"));
-				
+			} else if (gameRequest == "registerAction" || gameRequest == "start") {
 				// success
 				JSONobject jsonResponse;
 				// prepare json response and add to body
 				jsonResponse.addChild("result", "ok");
-				// if player flipped his hand we now have to send him his cards so he can see them
-				if (request->getGet("action") == "flipHand") {
-					JSONarray* jsonCards = jsonResponse.addArray("cards");
+				
+				if (gameRequest == "registerAction") {
+					// register action
+					myGame->registerAction(tPlayer, request->getGet("action"), request->getGet("content"));
 					
-					string cards[4];
-					tPlayer->getHand(cards);
-					for (int i = 0; i < 4; i++) {
-						jsonCards->addChild(cards[i]);
+					// if player flipped his hand we now have to send him his cards so he can see them
+					if (request->getGet("action") == "flipHand") {
+						JSONarray* jsonCards = jsonResponse.addArray("cards");
+						
+						string cards[4];
+						tPlayer->getHand(cards);
+						for (int i = 0; i < 4; i++) {
+							jsonCards->addChild(cards[i]);
+						}
 					}
+					
+					if (request->getGet("action") != "flipHand") {
+						// send new actions to waiting players
+						sendToWaiting(myGameCon);
+					}
+				
+				} else if (gameRequest == "start") {
+					if (myGame->getHost() == playerId) {
+						myGame->start();
+						sendToWaiting(myGameCon);
+					} else {
+						throw "you have to be host to start the game";
+					}
+
 				}
 				
 				// send response
 				sendResponse(sock, &jsonResponse);
 				
-				if (request->getGet("action") != "flipHand") {
-					// send new actions to waiting players
-					sendToWaiting(myGameCon);
-				}
 				
 			// unknown request -> close
 			} else {
@@ -310,7 +331,7 @@ void Server::sendToWaiting(GameContainer* gameCon) {
 bool Server::handleServerRequest(HTTPrequest* request) {
 	// create game
 	if (request->getGet("request") == "createGame") {
-		if (request->getGet("id") != "" && createGame(atoi(request->getGet("id").c_str()))) {
+		if (request->getGet("id") != "" && request->getGet("host") != "" && createGame(atoi(request->getGet("id").c_str()), atoi(request->getGet("host").c_str()))) {
 			return true;
 		}
 	// requests with game id
@@ -347,12 +368,11 @@ bool Server::handleServerRequest(HTTPrequest* request) {
 // send actions to players in waiting list
 bool Server::sendActions(PlayerRequest* request) {
 	
-	vector<Action*>::iterator aIter;
-	vector<Action*> *newActions;
 	pair<vector<Action*>, int> actions;
+	actions.second = request->since;
 	
 	// get all actions since given event number
-	actions = request->gameCon->game->getActionsSince(request->player, request->since);
+	request->gameCon->game->getActionsSince(&actions);
 	// no new actions ?
 	if (actions.second - request->since < 1) {
 		// stop here - request gets on waiting list
@@ -365,22 +385,13 @@ bool Server::sendActions(PlayerRequest* request) {
 	JSONarray* actionsArray = jsonResponse.addArray("actions");
 	
 	// go through all actions
-	newActions = &(actions.first);
-	for (aIter = newActions->begin(); aIter != newActions->end(); ++aIter) {
+	for (vector<Action*>::iterator aIter = actions.first.begin(); aIter != actions.first.end(); ++aIter) {
 		JSONobject* action = actionsArray->addObject();
 		action->addChild("action", (*aIter)->action);
-		if ((*aIter)->player != NULL) {
-			stringstream pId;
-			pId << (*aIter)->player->getId();
-			action->addChild("player", pId.str());
-		}
-		// player id may be stored in content because Player object is already destroyed
-		if ((*aIter)->player == NULL && (*aIter)->content != "") {
-			action->addChild("player", (*aIter)->content);
-		} else {
-			action->addChild("content", (*aIter)->content);
-		}
-		
+		stringstream pId;
+		pId << (*aIter)->player;
+		action->addChild("player", pId.str());
+		action->addChild("content", (*aIter)->content);
 	}
 	
 	// conclude response with the number of the last action
@@ -401,10 +412,10 @@ bool Server::sendActions(PlayerRequest* request) {
 }
 
 // creates a new game and stores it under given id
-bool Server::createGame(int gameId) {
+bool Server::createGame(int gameId, int host) {
 	// check if game id not yet created
 	if (games.find(gameId) == games.end()) {
-		games[gameId] = new GameContainer(gameId);
+		games[gameId] = new GameContainer(gameId, host);
 		return true;
 	}
 	return false;

@@ -5,7 +5,6 @@
 #include <set>
 using namespace std;
 #include "card.h"
-#include "game.h"
 
 class Game;
 
