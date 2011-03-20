@@ -177,7 +177,10 @@ bool Game::removePlayer(Player* player) {
 			cout << "spiel beendet" << endl;
 			// notify web server
 			wAPI.roundEnded(players.front().second, origPlayers);
-			notifyAction("finished", player);
+			Player* lastPlayer = players.front().second;
+			notifyAction("finished", lastPlayer);
+			// also destroy last player
+			delete lastPlayer;
 			destroyGame = true;
 		
 		} else {
@@ -225,18 +228,26 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 	
 	// chat
 	if (action == "chat") {
+		if (content == "") {
+			throw ActionExcept("no message submitted");
+		}
 		notifyAction("chat", tPlayer, content);
 		return true;
 	}
 	
+	if (!roundStarted) {
+		throw ActionExcept("round has not started yet");
+		return false;
+	}
+	
 	// not the player's turn ?
-	if (tPlayer != *turn && action != "flipHand") {
+	if (tPlayer != *turn && action != "flipHand" && action != "blindKnock") {
 		throw ActionExcept("not your turn");
 		return false;
 	}
 	
 	// open knock ?
-	if ((action == "layStack" || action == "knock") && !activeKnock.empty()) {
+	if ((action == "layStack" || action == "knock" || action == "blindKnock") && !activeKnock.empty()) {
 		throw ActionExcept("there is an active knock");
 		return false;
 	}
@@ -345,8 +356,28 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 			notifyAction("turn", *turn);
 			return true;
 		}
+		
+		
+	// blind knock
+	} else if (action == "blindKnock") {
+		const int blindKnocks = atoi(content.c_str());
+		if (blindKnocks < 1) {
+			throw ActionExcept("too few knocks");
+		} else {
+			tPlayer->blindKnock(knocks);
+			// increase total knocks
+			knocks += blindKnocks;
+			activeKnock = playersSmallRound;
+			removePlayerFromList(activeKnock, tPlayer);
+			notifyAction("blindKnocked", tPlayer, knocks);
+			if (*turn == tPlayer) {
+				nextTurn();
+				notifyAction("turn", *turn);
+			}
+			return true;
+		}
 
-	
+		
 	// call
 	} else if (action == "call") {
 		// check if there is a knock to call and the player didn't do so already

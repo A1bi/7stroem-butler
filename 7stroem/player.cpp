@@ -1,6 +1,7 @@
 #include <vector>
 using namespace std;
 #include "player.h"
+#include "game.h"
 
 // constructor
 Player::Player(int i, string a, Game* g): PlayerId(i), authcode(a), game(g) {
@@ -93,18 +94,31 @@ void Player::newSmallRound() {
 	// other things
 	folded = false;
 	knocked = false;
+	flipped = false;
 	calls = 1;
 }
 
 // player knocks
-bool Player::knock() {
+bool Player::knock(const int knocks) {
 	// player can only knock once and if he has less than 6 strikes
-	if (knocked || strikes > 5) {
-		return false;
+	if (knocked) {
+		throw ActionExcept("you just knocked");
+	} else if (strikes+calls+knocks > 6) {
+		throw ActionExcept("you cannot exceed seven strikes");
 	}
 	// also increase calls because he obviously has to call his own knock
 	call();
 	return true;
+}
+
+// player knocks blindly
+bool Player::blindKnock(const int knocks) {
+	// check if not already flipped
+	if (!flipped) {
+		knock(knocks);
+		return true;
+	}
+	throw ActionExcept("you have already seen your cards");
 }
 
 // player calls afters another player knocked

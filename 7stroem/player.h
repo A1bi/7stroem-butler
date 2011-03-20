@@ -15,7 +15,8 @@ class Player {
 	bool authenticate(int pid, string authcode);
 	void giveCard(Card *givenCard);
 	bool layStack(Card *hCard);
-	bool knock();
+	bool knock(const int = 1);
+	bool blindKnock(const int);
 	bool fold();
 	void call();
 	void win();
