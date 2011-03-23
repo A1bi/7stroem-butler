@@ -59,6 +59,7 @@ void Game::startRound() {
 	turn = playersRound.end()-1;
 	roundStarted = true;
 	someonePoor = false;
+	blindKnocked = false;
 	origPlayers = playersRound.size();
 	// web server
 	wAPI.roundStarted();
@@ -89,10 +90,17 @@ void Game::startSmallRound() {
 			someonePoor = true;
 			knocks++;
 			notifyAction("poor", *pIter);
-		} else if (someonePoor) {
-			activeKnock.push_back(*pIter);
 		}
 		playersSmallRound.push_back(*pIter);
+	}
+	
+	// if anyone is poor we have to open a knock and put all player in it who are not poor
+	if (someonePoor) {
+		for (vPlayer::iterator pIter = playersRound.begin(); pIter != playersRound.end(); ++pIter) {
+			if ((*pIter)->getStrikes() < 6) {
+				activeKnock.push_back(*pIter);
+			}
+		}
 	}
 	
 	// since we recreated playersSmallRound we now have to find back the turn we had before using oldTurn
@@ -116,6 +124,7 @@ void Game::endSmallRound() {
 	// reset to all players active
 	playersSmallRound.clear();
 	someonePoor = false;
+	blindKnocked = false;
 	
 	for (vpPlayer::iterator pIter = players.begin(); pIter != players.end(); ++pIter) {
 		// notify new strike state
@@ -200,8 +209,8 @@ bool Game::removePlayer(Player* player) {
 					lastWinner = *turn;
 				}
 			}
-			playersRound.erase(find(playersRound.begin(), playersRound.end(), player));
-			playersSmallRound.erase(find(playersSmallRound.begin(), playersSmallRound.end(), player));
+			removePlayerFromList(playersRound, player);
+			removePlayerFromList(playersSmallRound, player);
 			// round has one player left
 			if (playersRound.size() < 2) {
 				endRound();
@@ -275,6 +284,12 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 		return false;
 	}
 	
+	// no open knock ?
+	if ((action == "call" || action == "fold") && activeKnock.empty()) {
+		throw ActionExcept("there is no active knock");
+		return false;
+	}
+	
 	// cannot knock if anyone is poor
 	if ((action == "knock" || action == "blindKnock") && someonePoor) {
 		throw ActionExcept("you cannot knock if anyone is poor");
@@ -284,15 +299,11 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 	
 	// fold
 	if (action == "fold") {
-		// folding is only possible in an active knock
-		if (activeKnock.empty()) {
-			throw ActionExcept("no active knock");
-		}
 		// fold cards -> quit round
 		if (tPlayer->fold()) {
 			notifyAction("folded", tPlayer);
 			// remove player from active knock
-			removePlayerFromList(activeKnock, tPlayer);
+			removeFromKnock(tPlayer);
 			
 			nextTurn();
 			// save current turn for later
@@ -393,7 +404,8 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 		} else {
 			tPlayer->blindKnock(blindKnocks);
 			knock(tPlayer, blindKnocks);
-			notifyAction("blindKnocked", tPlayer, knocks);
+			blindKnocked = true;
+			notifyAction("blindKnocked", tPlayer, blindKnocks);
 			if (*turn == tPlayer) {
 				nextTurn();
 				notifyAction("turn", *turn);
@@ -406,7 +418,7 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 	} else if (action == "call") {
 		// check if there is a knock to call and the player didn't do so already
 		if (!activeKnock.empty() && find(activeKnock.begin(), activeKnock.end(), tPlayer) != activeKnock.end()) {
-			removePlayerFromList(activeKnock, tPlayer);
+			removeFromKnock(tPlayer);
 			tPlayer->call();
 			notifyAction("called", tPlayer);
 			nextTurn();
@@ -506,8 +518,9 @@ void Game::nextTurn() {
 		if (++turn >= playersSmallRound.end()) {
 			turn = playersSmallRound.begin();
 		}
-		// if knock of a poor player is still active, jump to the next player who is not poor
-		if (someonePoor && !activeKnock.empty() && (*turn)->getStrikes() > 5) {
+		// if knock of a poor player is still active, jump to the next player
+		// also jump if this player blind knocked
+		if ((someonePoor && !activeKnock.empty() && (*turn)->getStrikes() > 5) || (blindKnocked && find(activeKnock.begin(), activeKnock.end(), *turn) == activeKnock.end())) {
 			continue;
 		}
 		break;
@@ -534,7 +547,7 @@ Player* Game::getPlayer(int playerId) {
 // open an active knock
 void Game::knock(Player* player, int k) {
 	activeKnock = playersSmallRound;
-	removePlayerFromList(activeKnock, player);
+	removeFromKnock(player);
 	knocks += k;
 }
 
@@ -546,4 +559,12 @@ bool Game::removePlayerFromList(vPlayer &oPlayers, Player *delPlayer) {
 		return true;
 	}
 	return false;
+}
+
+// remove player from active knock
+void Game::removeFromKnock(Player* player) {
+	removePlayerFromList(activeKnock, player);
+	if (blindKnocked && activeKnock.empty()) {
+		blindKnocked = false;
+	}
 }

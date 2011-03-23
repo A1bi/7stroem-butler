@@ -74,9 +74,10 @@ class Game {
 	// array containing the whole card deck
 	vector<Card*> allCards;
 	// number of knocks players did in this round
+	// TODO: get rid of knocks
 	int knocks;
 	int turns;
-	bool started, roundStarted, someonePoor;
+	bool started, roundStarted, someonePoor, blindKnocked;
 	WebAPI wAPI;
 	
 	void start();
@@ -92,6 +93,7 @@ class Game {
 	void endRound();
 	void knock(Player*, int);
 	bool removePlayerFromList(vPlayer &oPlayers, Player *delPlayer);
+	void removeFromKnock(Player*);
 	
 };
 
