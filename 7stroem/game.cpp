@@ -18,7 +18,6 @@ Game::Game(int i, int h): gameId(i), host(h), wAPI(this) {
 	}
 	roundStarted = false;
 	started = false;
-	//WebAPI wAPI(this);
 }
 
 // destructor
@@ -59,6 +58,7 @@ void Game::startRound() {
 	// initial turn
 	turn = playersRound.end()-1;
 	roundStarted = true;
+	someonePoor = false;
 	origPlayers = playersRound.size();
 	// web server
 	wAPI.roundStarted();
@@ -84,18 +84,21 @@ void Game::startSmallRound() {
 	// add all players in this round to playersSmallRound
 	for (vPlayer::iterator pIter = playersRound.begin(); pIter != playersRound.end(); ++pIter) {
 		(*pIter)->newSmallRound();
+		// player is poor ?
 		if ((*pIter)->getStrikes() > 5) {
+			someonePoor = true;
+			knocks++;
 			notifyAction("poor", *pIter);
+		} else if (someonePoor) {
+			activeKnock.push_back(*pIter);
 		}
 		playersSmallRound.push_back(*pIter);
 	}
 	
 	// since we recreated playersSmallRound we now have to find back the turn we had before using oldTurn
 	// also increase to get next turn
-	turn = find(playersSmallRound.begin(), playersSmallRound.end(), oldTurn) + 1;
-	if (turn == playersSmallRound.end()) {
-		turn = playersSmallRound.begin();
-	}
+	setTurn(oldTurn);
+	nextTurn();
 	
 	turns = 1;
 	// new winner is now the player who is first
@@ -112,6 +115,7 @@ void Game::endSmallRound() {
 	notifyAction("smallRoundEnded", lastWinner);
 	// reset to all players active
 	playersSmallRound.clear();
+	someonePoor = false;
 	
 	for (vpPlayer::iterator pIter = players.begin(); pIter != players.end(); ++pIter) {
 		// notify new strike state
@@ -223,6 +227,25 @@ bool Game::removePlayer(Player* player) {
 	return destroyGame;
 }
 
+// host did something
+bool Game::registerHostAction(Player* tPlayer, string action) {
+	if (host != tPlayer->getId()) throw ActionExcept("you are not the host of this game");
+	if (roundStarted) {
+		throw ActionExcept("round has already started");
+		return false;
+	}
+	
+	if (action == "startGame") {
+		if (started) throw ActionExcept("game is already running");
+		start();
+	
+	} else if (action == "newRound") {
+		if (!started) throw ActionExcept("game has not started yet");
+		startRound();
+	}
+	return true;
+}
+
 // register an action
 bool Game::registerAction(Player* tPlayer, string action, string content) {
 	
@@ -252,6 +275,12 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 		return false;
 	}
 	
+	// cannot knock if anyone is poor
+	if ((action == "knock" || action == "blindKnock") && someonePoor) {
+		throw ActionExcept("you cannot knock if anyone is poor");
+		return false;
+	}
+
 	
 	// fold
 	if (action == "fold") {
@@ -348,9 +377,7 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 	// knock
 	} else if (action == "knock") {
 		if (tPlayer->knock()) {
-			activeKnock = playersSmallRound;
-			removePlayerFromList(activeKnock, tPlayer);
-			knocks++;
+			knock(tPlayer, 1);
 			notifyAction("knocked", tPlayer);
 			nextTurn();
 			notifyAction("turn", *turn);
@@ -364,11 +391,8 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 		if (blindKnocks < 1) {
 			throw ActionExcept("too few knocks");
 		} else {
-			tPlayer->blindKnock(knocks);
-			// increase total knocks
-			knocks += blindKnocks;
-			activeKnock = playersSmallRound;
-			removePlayerFromList(activeKnock, tPlayer);
+			tPlayer->blindKnock(blindKnocks);
+			knock(tPlayer, blindKnocks);
 			notifyAction("blindKnocked", tPlayer, knocks);
 			if (*turn == tPlayer) {
 				nextTurn();
@@ -478,8 +502,15 @@ void Game::giveCards() {
 
 // it's the next player's turn
 void Game::nextTurn() {
-	if (++turn >= playersSmallRound.end()) {
-		turn = playersSmallRound.begin();
+	while (true) {
+		if (++turn >= playersSmallRound.end()) {
+			turn = playersSmallRound.begin();
+		}
+		// if knock of a poor player is still active, jump to the next player who is not poor
+		if (someonePoor && !activeKnock.empty() && (*turn)->getStrikes() > 5) {
+			continue;
+		}
+		break;
 	}
 }
 
@@ -498,6 +529,13 @@ Player* Game::getPlayer(int playerId) {
 	}
 	// not found
 	return NULL;
+}
+
+// open an active knock
+void Game::knock(Player* player, int k) {
+	activeKnock = playersSmallRound;
+	removePlayerFromList(activeKnock, player);
+	knocks += k;
 }
 
 // remove player from vector

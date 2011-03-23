@@ -50,7 +50,7 @@ class Game {
 	Player* authenticate(int playerId, string authcode);
 	void getActionsSince(pair<vector<Action*>, int>*);
 	bool registerAction(Player*, string action, string content);
-	void start();
+	bool registerHostAction(Player*, string);
 	int getId();
 	int getHost() {
 		return host;
@@ -76,9 +76,10 @@ class Game {
 	// number of knocks players did in this round
 	int knocks;
 	int turns;
-	bool started, roundStarted;
+	bool started, roundStarted, someonePoor;
 	WebAPI wAPI;
 	
+	void start();
 	Player* getPlayer(int playerId);
 	void notifyAction(string action, Player *aPlayer = NULL, string content = "");
 	void notifyAction(string action, Player *aPlayer, int content);
@@ -89,6 +90,7 @@ class Game {
 	void startSmallRound();
 	void endSmallRound();
 	void endRound();
+	void knock(Player*, int);
 	bool removePlayerFromList(vPlayer &oPlayers, Player *delPlayer);
 	
 };

@@ -134,6 +134,7 @@ void Server::checkMissingPlayers() {
 			cout << "player disconnected" << endl;
 			// TODO: altaaa. das is nich gut!!
 			GameContainer* gameCon = games[(*vIter)->getGame()->getId()];
+			// TODO: bad access wenn beide spieler gleichzeitig das spiel verlassen
 			Game* game = gameCon->game;
 			
 			// lock mutex
@@ -247,7 +248,7 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 				
 				
 			// player performed an action
-			} else if (gameRequest == "registerAction" || gameRequest == "start") {
+			} else if (gameRequest == "registerAction" || gameRequest == "registerHostAction") {
 				// success
 				JSONobject jsonResponse;
 				// prepare json response and add to body
@@ -273,14 +274,9 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 						sendToWaiting(myGameCon);
 					}
 				
-				} else if (gameRequest == "start") {
-					if (myGame->getHost() == playerId) {
-						myGame->start();
-						sendToWaiting(myGameCon);
-					} else {
-						throw "you have to be host to start the game";
-					}
-
+				} else if (gameRequest == "registerHostAction") {
+					myGame->registerHostAction(tPlayer, request->getGet("action"));
+					sendToWaiting(myGameCon);
 				}
 				
 				// send response
@@ -354,11 +350,13 @@ bool Server::handleServerRequest(HTTPrequest* request) {
 					sendToWaiting(gameCon);
 					return true;
 				}
-			// start game
+			/*
+			// start game - obsolete
 			} else if (request->getGet("request") == "startGame") {
 				gameCon->game->start();
 				sendToWaiting(gameCon);
 				return true;
+			*/
 			}
 		}
 	}

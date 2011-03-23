@@ -107,7 +107,7 @@ bool Player::knock(const int knocks) {
 		throw ActionExcept("you cannot exceed seven strikes");
 	}
 	// also increase calls because he obviously has to call his own knock
-	call();
+	call(knocks);
 	return true;
 }
 
@@ -122,8 +122,8 @@ bool Player::blindKnock(const int knocks) {
 }
 
 // player calls afters another player knocked
-void Player::call() {
-	calls++;
+void Player::call(const int c) {
+	calls += c;
 }
 
 // return last card on top of player's stack
