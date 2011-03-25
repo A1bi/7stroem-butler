@@ -93,18 +93,14 @@ void Player::newSmallRound() {
 	stack.clear();
 	// other things
 	folded = false;
-	knocked = false;
 	flipped = false;
 	calls = 1;
 }
 
 // player knocks
 bool Player::knock(const int knocks) {
-	// player can only knock once and if he has less than 6 strikes
-	if (knocked) {
-		throw ActionExcept("you just knocked");
-	} else if (strikes+calls+knocks > 6) {
-		throw ActionExcept("you cannot exceed seven strikes");
+	if (strikes > 5) {
+		throw ActionExcept("you cannot knock when you are poor");
 	}
 	// also increase calls because he obviously has to call his own knock
 	call(knocks);

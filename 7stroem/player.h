@@ -47,7 +47,6 @@ class Player {
 	bool flipped;
 	int strikes;
 	int calls;
-	bool knocked;
 	int connected;
 	int lastSeen;
 	

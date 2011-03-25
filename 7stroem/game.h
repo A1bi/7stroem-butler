@@ -67,15 +67,13 @@ class Game {
 	vPlayer playersRound, playersSmallRound, activeKnock;
 	int origPlayers;
 	// whose turn is it, who did win last ?
-	vPlayer::iterator turn;
+	vPlayer::iterator turn, knockTurn;
 	Player* lastWinner;
 	// actions list
 	vector<Action*> actions;
 	// array containing the whole card deck
 	vector<Card*> allCards;
 	// number of knocks players did in this round
-	// TODO: get rid of knocks
-	int knocks;
 	int turns;
 	bool started, roundStarted, someonePoor, blindKnocked;
 	WebAPI wAPI;
@@ -86,6 +84,7 @@ class Game {
 	void notifyAction(string action, Player *aPlayer, int content);
 	void giveCards();
 	void nextTurn();
+	void nextKnockTurn();
 	void setTurn(Player *tPlayer);
 	void startRound();
 	void startSmallRound();
