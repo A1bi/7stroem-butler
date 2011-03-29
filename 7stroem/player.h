@@ -18,7 +18,7 @@ class Player {
 	bool knock(const int = 1);
 	bool blindKnock(const int);
 	bool fold();
-	void call(const int = 1);
+	void call(const int);
 	void win();
 	void lose();
 	Card* lastStack();
@@ -45,6 +45,7 @@ class Player {
 	vector<Card*> stack;
 	bool folded;
 	bool flipped;
+	bool knockPossible;
 	int strikes;
 	int calls;
 	int connected;

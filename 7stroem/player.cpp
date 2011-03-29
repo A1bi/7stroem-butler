@@ -94,16 +94,22 @@ void Player::newSmallRound() {
 	// other things
 	folded = false;
 	flipped = false;
+	knockPossible = true;
 	calls = 1;
 }
 
 // player knocks
 bool Player::knock(const int knocks) {
-	if (strikes > 5) {
+	if (!knockPossible) {
+		throw ActionExcept("you have to call another player's knock before you can knock again");
+	} else if (strikes > 5) {
 		throw ActionExcept("you cannot knock when you are poor");
+	} else if (strikes+calls+knocks > 7) {
+		throw ActionExcept("you cannot exceed seven strikes");
 	}
 	// also increase calls because he obviously has to call his own knock
-	call(knocks);
+	knockPossible = false;
+	calls += knocks;
 	return true;
 }
 
@@ -120,6 +126,7 @@ bool Player::blindKnock(const int knocks) {
 // player calls afters another player knocked
 void Player::call(const int c) {
 	calls += c;
+	knockPossible = true;
 }
 
 // return last card on top of player's stack

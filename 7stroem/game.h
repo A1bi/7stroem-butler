@@ -73,8 +73,7 @@ class Game {
 	vector<Action*> actions;
 	// array containing the whole card deck
 	vector<Card*> allCards;
-	// number of knocks players did in this round
-	int turns;
+	int turns, knocks;
 	bool started, roundStarted, someonePoor, blindKnocked;
 	WebAPI wAPI;
 	
@@ -82,16 +81,17 @@ class Game {
 	Player* getPlayer(int playerId);
 	void notifyAction(string action, Player *aPlayer = NULL, string content = "");
 	void notifyAction(string action, Player *aPlayer, int content);
+	void notifyTurn(bool = false);
 	void giveCards();
 	void nextTurn();
 	void nextKnockTurn();
-	void setTurn(Player *tPlayer);
+	//void setTurn(Player *tPlayer);
 	void startRound();
 	void startSmallRound();
 	void endSmallRound();
 	void endRound();
 	void knock(Player*, int);
-	bool removePlayerFromList(vPlayer &oPlayers, Player *delPlayer);
+	bool removePlayerFromList(vPlayer&, Player*, vPlayer::iterator* = NULL);
 	void removeFromKnock(Player*);
 	
 };

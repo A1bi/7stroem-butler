@@ -80,8 +80,6 @@ void Game::endRound() {
 
 // start a round
 void Game::startSmallRound() {
-	// before we reset we have to save the current turn's pointer so we can find the player afterwards
-	Player* oldTurn = *turn;
 	// add all players in this round to playersSmallRound
 	someonePoor = false;
 	for (vPlayer::iterator pIter = playersRound.begin(); pIter != playersRound.end(); ++pIter) {
@@ -92,6 +90,10 @@ void Game::startSmallRound() {
 			notifyAction("poor", *pIter);
 		}
 		playersSmallRound.push_back(*pIter);
+		// update turn iterator position
+		if (*pIter == *turn) {
+			turn = playersSmallRound.end()-1;
+		}
 	}
 	
 	// if anyone is poor we have to open a knock and put all player in it who are not poor
@@ -101,12 +103,11 @@ void Game::startSmallRound() {
 				activeKnock.push_back(*pIter);
 			}
 		}
+		knocks = 1;
 		knockTurn = activeKnock.begin();
 	}
 	
-	// since we recreated playersSmallRound we now have to find back the turn we had before using oldTurn
-	// also increase to get next turn
-	setTurn(oldTurn);
+	// increase to get next turn
 	nextTurn();
 	
 	turns = 1;
@@ -117,7 +118,7 @@ void Game::startSmallRound() {
 	notifyAction("smallRoundStarted");
 	giveCards();
 	// notify first turn
-	notifyAction("turn", (!someonePoor) ? *turn : *knockTurn);
+	notifyTurn();
 }
 
 // end a round
@@ -306,21 +307,17 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 			// remove player from active knock
 			removeFromKnock(tPlayer);
 			
-			// save current turn for later
-			Player* oldTurn = *turn;
 			// remove player from active list
-			removePlayerFromList(playersSmallRound, tPlayer);
+			removePlayerFromList(playersSmallRound, tPlayer, &turn);
 			if (playersSmallRound.size() == 1) {
 				// only one player left -> end round
 				lastWinner = playersSmallRound.front();
-				setTurn(lastWinner);
+				turn = playersSmallRound.begin();
 				endSmallRound();
 				
 			} else {
-				setTurn(oldTurn);
-				// TODO: nextKnockTurn nur wenn activeKnock nicht leer
 				nextKnockTurn();
-				notifyAction("turn", (activeKnock.empty()) ? *turn : *knockTurn);
+				notifyTurn();
 				// last winner is now the player next to this player
 				// TODO: fix this
 				if (lastWinner == tPlayer) {
@@ -366,13 +363,12 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 					if (*pIter == lastWinner) continue;
 					if ((*(*pIter)->lastStack()) > (*lastWinner->lastStack())) {
 						lastWinner = *pIter;
+						turn = pIter;
 					} else if (turns == 4) {
 						// last turn of small round -> player lost this round
 						(*pIter)->lose();
 					}
 				}
-				// it's last winner's turn
-				setTurn(lastWinner);
 				// it's now the player's turn who has won
 				if (turns == 4) {
 					endSmallRound();
@@ -382,7 +378,7 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 				}
 				
 			}
-			notifyAction("turn", *turn);
+			notifyTurn();
 			return true;
 		}
 
@@ -392,7 +388,7 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 		if (tPlayer->knock()) {
 			knock(tPlayer, 1);
 			notifyAction("knocked", tPlayer);
-			notifyAction("turn", *knockTurn);
+			notifyTurn(true);
 			return true;
 		}
 		
@@ -409,22 +405,23 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 			knock(tPlayer, blindKnocks);
 			blindKnocked = true;
 			notifyAction("blindKnocked", tPlayer, blindKnocks);
-			notifyAction("turn", *knockTurn);
+			notifyTurn(true);
 			return true;
 		}
 
 		
 	// call
 	} else if (action == "call") {
-		// check if there is a knock to call and the player didn't do so already
+		// check if the player didn't call already
 		if (find(activeKnock.begin(), activeKnock.end(), tPlayer) != activeKnock.end()) {
 			removeFromKnock(tPlayer);
-			tPlayer->call();
+			tPlayer->call(knocks);
 			notifyAction("called", tPlayer);
 			nextKnockTurn();
-			notifyAction("turn", (activeKnock.empty()) ? *turn : *knockTurn);
+			notifyTurn();
 			return true;
 		}
+		throw ActionExcept("you have already called");
 
 	
 	// flipHand
@@ -455,6 +452,16 @@ void Game::notifyAction(string action, Player *aPlayer, int content) {
 	Action *newAction = new Action(action, aPlayer, intContent.str());
 	// queue action
 	actions.push_back(newAction);
+}
+
+// send the new turn
+void Game::notifyTurn(bool knock) {
+	// if there is an active knock send the next turn in this knock instead
+	if (knock || !activeKnock.empty()) {
+		notifyAction("knockTurn", *knockTurn);
+	} else {
+		notifyAction("turn", *turn);
+	}
 }
 
 // get all actions since the given start up to the most recent
@@ -525,10 +532,10 @@ void Game::nextKnockTurn() {
 	}
 }
 
-// sets the turn to the given player
+/*// sets the turn to the given player
 void Game::setTurn(Player *tPlayer) {
 	turn = find(playersSmallRound.begin(), playersSmallRound.end(), tPlayer);
-}
+}*/
 
 // returns reference to Player object for given id
 Player* Game::getPlayer(int playerId) {
@@ -547,13 +554,18 @@ void Game::knock(Player* player, int k) {
 	activeKnock = playersSmallRound;
 	removeFromKnock(player);
 	knockTurn = activeKnock.begin();
+	knocks = k;
 }
 
 // remove player from vector
-bool Game::removePlayerFromList(vPlayer &oPlayers, Player *delPlayer) {
+bool Game::removePlayerFromList(vPlayer &oPlayers, Player *delPlayer, vPlayer::iterator* pTurn) {
 	vPlayer::iterator dPlayer = find(oPlayers.begin(), oPlayers.end(), delPlayer);
 	if (dPlayer != oPlayers.end()) {
-		oPlayers.erase(dPlayer);
+		dPlayer = oPlayers.erase(dPlayer);
+		// also update turn iterator ?
+		if (pTurn != NULL && dPlayer < *pTurn) {
+			--*pTurn;
+		}
 		return true;
 	}
 	return false;
