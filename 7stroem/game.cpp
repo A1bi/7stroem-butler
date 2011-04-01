@@ -185,22 +185,27 @@ bool Game::removePlayer(Player* player) {
 		wAPI.changeHost();
 	}
 	
-	if (roundStarted) {
+	if (started) {
 		// whole game has only one player left
 		if (players.size() < 2) {
 			cout << "spiel beendet" << endl;
-			// notify web server
-			wAPI.roundEnded(players.front().second, origPlayers);
+			if (roundStarted) {
+				// notify web server
+				wAPI.roundEnded(players.front().second, origPlayers);
+			}
 			Player* lastPlayer = players.front().second;
 			notifyAction("finished", lastPlayer);
 			// also destroy last player
 			delete lastPlayer;
 			destroyGame = true;
 		
-		} else {
+		} else if (roundStarted) {
 			bool newTurn = false;
 			if (*turn == player) {
 				nextTurn();
+				newTurn = true;
+			} else if (*knockTurn == player && !activeKnock.empty()) {
+				nextKnockTurn();
 				newTurn = true;
 			}
 			if (lastWinner == player) {
@@ -318,14 +323,9 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 			} else {
 				nextKnockTurn();
 				notifyTurn();
-				// last winner is now the player next to this player
-				// TODO: fix this
+				// last winner is now the player who has opened this knock
 				if (lastWinner == tPlayer) {
-					if (turn+1 == playersSmallRound.end()) {
-						lastWinner = playersSmallRound.front();
-					} else {
-						lastWinner = *turn;
-					}
+					lastWinner = *turn;
 				}
 			}
 			
