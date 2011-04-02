@@ -82,6 +82,7 @@ void Game::endRound() {
 void Game::startSmallRound() {
 	// add all players in this round to playersSmallRound
 	someonePoor = false;
+	Player* oldTurn = *turn;
 	for (vPlayer::iterator pIter = playersRound.begin(); pIter != playersRound.end(); ++pIter) {
 		(*pIter)->newSmallRound();
 		// player is poor ?
@@ -91,11 +92,11 @@ void Game::startSmallRound() {
 		}
 		playersSmallRound.push_back(*pIter);
 		// update turn iterator position
-		if (*pIter == *turn) {
+		if (*pIter == oldTurn) {
 			turn = playersSmallRound.end()-1;
 		}
 	}
-	
+
 	// if anyone is poor we have to open a knock and put all player in it who are not poor
 	if (someonePoor) {
 		for (vPlayer::iterator pIter = playersRound.begin(); pIter != playersRound.end(); ++pIter) {
@@ -354,6 +355,7 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 		if (tPlayer->layStack(lCard)) {
 			notifyAction("laidStack", tPlayer, lCard->getCardId());
 			nextTurn();
+			bool newTurn = true;
 			// small round complete
 			if (*turn == lastWinner) {
 				// check who won
@@ -372,13 +374,16 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 				// it's now the player's turn who has won
 				if (turns == 4) {
 					endSmallRound();
+					newTurn = false;
 				} else {
 					// next turn
 					turns++;
 				}
-				
+			
 			}
-			notifyTurn();
+			if (newTurn) {
+				notifyTurn();
+			}
 			return true;
 		}
 

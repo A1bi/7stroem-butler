@@ -34,21 +34,18 @@ JSONobject::JSONobject(const string rawObject) {
 // add child
 void JSONobject::addChild(string key, string value) {
 	// create child
-	JSONchild* child = new JSONchild;
+	JSONchild* child = newChild(key);
 	// assign string to value
 	child->value = value;
-	// push child into vector
-	pushChild(key, child);
 }
 
 // add array
 JSONarray* JSONobject::addArray(string key, string content) {
 	// create json array
 	JSONarray* array = new JSONarray(content);
-	JSONchild* child = new JSONchild;
+	JSONchild* child = newChild(key);
 	// assign pointer to object
 	child->array = array;
-	pushChild(key, child);
 	// return array pointer
 	return array;
 }
@@ -57,11 +54,9 @@ JSONarray* JSONobject::addArray(string key, string content) {
 JSONobject* JSONobject::addObject(string key, string content) {
 	// create object pointer
 	JSONobject* object = new JSONobject(content);
-	JSONchild* child = new JSONchild;
+	JSONchild* child = newChild(key);
 	// assign pointer
 	child->object = object;
-	// push child into vector
-	pushChild(key, child);
 	// return json object pointer
 	return object;
 }
@@ -132,11 +127,15 @@ JSONarray* JSONobject::getArray(string key) {
 }
 
 // pushes child into vector
-void JSONobject::pushChild(string key, JSONchild* child) {
+JSONchild* JSONobject::newChild(string key) {
 	// create a pair which stores key and JSONchild object
-	pair<string, JSONchild*> pChild(key, child);
+	pair<string, JSONchild*> pChild;
+	pChild.first = key;
+	JSONchild* child = new JSONchild;
+	pChild.second = child;
 	// push into vector as last element
 	children.push_back(pChild);
+	return child;
 }
 
 // destructor
@@ -144,14 +143,10 @@ JSONobject::~JSONobject() {
 	// go through all children
 	vChildren::iterator vIter;
 	for (vIter = children.begin(); vIter != children.end(); ++vIter) {
-		// destroy json object or array in child
-		delete vIter->second->object;
-		delete vIter->second->array;
 		// destroy child object
 		delete vIter->second;
 	}
 }
-
 
 // -- JSONarray --
 // the only difference to JSONobject is the lack of a key for each child
@@ -229,8 +224,6 @@ JSONarray::~JSONarray() {
 	// go through all children
 	vChildren::iterator vIter;
 	for (vIter = children.begin(); vIter != children.end(); ++vIter) {
-		// destroy json object in child
-		delete (*vIter)->object;
 		// destroy child object
 		delete *vIter;
 	}

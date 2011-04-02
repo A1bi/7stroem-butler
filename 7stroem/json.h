@@ -30,7 +30,7 @@ public:
 	JSONarray* getArray(string);
 	
 protected:
-	void pushChild(string, JSONchild*);
+	JSONchild* newChild(string);
 	typedef vector<pair<string, JSONchild*> > vChildren;
 	vChildren children;
 	
@@ -60,6 +60,10 @@ struct JSONchild {
 		array = NULL;
 		object = NULL;
 		value = "";
+	}
+	~JSONchild() {
+		delete array;
+		delete object;
 	}
 };
 
