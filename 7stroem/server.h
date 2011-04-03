@@ -39,7 +39,7 @@ public:
 private:
 	map<int, GameContainer*> games;
 	vector<PlayerRequest*> openConnections;
-	vector<Player*> missingPlayers;
+	vector<PlayerRequest*> missingPlayers;
 	static const string authcode;
 	
 	void checkConnections();

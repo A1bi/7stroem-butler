@@ -90,13 +90,11 @@ void Server::checkConnections() {
 					checkSock.close();
 					// mark player as disconnected
 					(*vIter)->player->setDisconnected();
-					missingPlayers.push_back((*vIter)->player);
+					missingPlayers.push_back(*vIter);
 					// remove from set
 					FD_CLR((*vIter)->sock, &sockSet);
 					// remove from request list
 					(*vIter)->gameCon->requestsWaiting.erase(find((*vIter)->gameCon->requestsWaiting.begin(), (*vIter)->gameCon->requestsWaiting.end(), *vIter));
-					// destroy request object
-					delete *vIter;
 					// remove from open connections list
 					vIter = openConnections.erase(vIter)-1;
 					cout << "connection closed" << endl;
@@ -117,44 +115,51 @@ void Server::checkConnections() {
 // checks for missing players and removes them from their games if neccessary
 void Server::checkMissingPlayers() {
 	
-	vector<Player*>::iterator vIter;
+	vector<GameContainer*> gamesRemoved;
+	vector<PlayerRequest*>::iterator vIter;
 	for (vIter = missingPlayers.begin(); vIter != missingPlayers.end(); ++vIter) {
-		// check if still valid
-		if (*vIter == NULL) {
-			vIter = missingPlayers.erase(vIter)-1;
-			continue;
-		}
-		
-		// is connected again
-		if ((*vIter)->isConnected()) {
-			vIter = missingPlayers.erase(vIter)-1;
 		
 		// is completely disconnected
-		} else if ((*vIter)->isMissing()) {
-			cout << "player disconnected" << endl;
-			// TODO: altaaa. das is nich gut!!
-			GameContainer* gameCon = games[(*vIter)->getGame()->getId()];
-			// TODO: bad access wenn beide spieler gleichzeitig das spiel verlassen
-			Game* game = gameCon->game;
+		Player* player = (*vIter)->player;
+		GameContainer* gameCon = (*vIter)->gameCon;
+		// check if this games has not yet been removed
+		if (find(gamesRemoved.begin(), gamesRemoved.end(), gameCon) == gamesRemoved.end()) {
 			
-			// lock mutex
-			boost::mutex::scoped_lock lock(gameCon->mutex);
-			
-			if (game->removePlayer(*vIter)) {
-				// no players left -> remove game
-				games.erase(game->getId());
-				sendToWaiting(gameCon);
-				// unlock mutex before destroying the object
-				lock.unlock();
-				// destroy object
-				delete gameCon;
-			} else {
-				sendToWaiting(gameCon);
-			}
-			
-			vIter = missingPlayers.erase(vIter)-1;
-		}
+			cout << player << " check" << endl;
+			if (!player->isConnected()) {
+				if (player->isMissing()) {
+					cout << "player disconnected" << endl;
+					Game* game = gameCon->game;
+					cout << game << endl;
+					
+					// lock mutex
+					boost::mutex::scoped_lock lock(gameCon->mutex);
+					
+					// get number of players to determine if any player has to be notified of the finished game
+					if (game->removePlayer(player)) {
+						// no players left -> remove game
+						games.erase(game->getId());
+						gamesRemoved.push_back(gameCon);
+						sendToWaiting(gameCon);
+						
+						// unlock mutex before destroying the object
+						lock.unlock();
+						// destroy object
+						delete gameCon;
+					} else {
+						sendToWaiting(gameCon);
+					}
 
+				// if player is disconnected but not yet missing we have to skip removal of player from missing list
+				} else {
+					continue;
+				}
+			}
+		
+		}
+		
+		delete *vIter;
+		vIter = missingPlayers.erase(vIter)-1;
 	}
 		
 }
@@ -345,7 +350,8 @@ bool Server::handleServerRequest(HTTPrequest* request) {
 					}
 					// add to missing list - the player might never connect in the first place
 					boost::mutex::scoped_lock lock(mutexConn);
-					missingPlayers.push_back(newPlayer);
+					// push back a dummy player request
+					missingPlayers.push_back(new PlayerRequest(gameCon, newPlayer, -1, -1));
 					lock.unlock();
 					sendToWaiting(gameCon);
 					return true;

@@ -176,7 +176,7 @@ bool Player::isConnected() {
 // check if player is missing
 bool Player::isMissing() {
 	// the last connection to the server of any client was more than 5 seconds ago
-	return (connected < 1 && lastSeen + 5 < time(NULL));
+	return (connected < 1 && lastSeen + 3 < time(NULL));
 }
 
 // get cards in player's hand as string separated by a comma
