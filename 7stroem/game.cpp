@@ -128,15 +128,15 @@ void Game::endSmallRound() {
 	// reset to all players active
 	playersSmallRound.clear();
 	
-	for (vpPlayer::iterator pIter = players.begin(); pIter != players.end(); ++pIter) {
+	for (vPlayer::iterator pIter = playersRound.begin(); pIter != playersRound.end(); ++pIter) {
 		// notify new strike state
-		notifyAction("strikes", pIter->second, pIter->second->getStrikes());
+		notifyAction("strikes", *pIter, (*pIter)->getStrikes());
 		
 		// player has 7 strikes -> out
-		if (pIter->second->getStrikes() > 6) {
-			notifyAction("out", pIter->second);
+		if ((*pIter)->getStrikes() > 6) {
+			notifyAction("out", *pIter);
 			// remove from round
-			playersRound.erase(find(playersRound.begin(), playersRound.end(), pIter->second));
+			pIter = playersRound.erase(pIter)-1;
 		}
 	}
 	
