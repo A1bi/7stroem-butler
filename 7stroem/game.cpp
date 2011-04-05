@@ -166,7 +166,7 @@ Player* Game::addPlayer(int playerId, string authcode) {
 
 // removes player from game
 bool Game::removePlayer(Player* player) {
-	bool destroyGame = false;
+	bool destroyGame = false, finished = false;
 	vpPlayer::iterator pIter = find(players.begin(), players.end(), player->getId());
 	if (pIter == players.end()) {
 		// player not found
@@ -177,28 +177,19 @@ bool Game::removePlayer(Player* player) {
 	wAPI.playerQuit(player);
 	notifyAction("playerQuit", player);
 	players.erase(pIter);
-	
-	// check if host has to be changed
-	if (host == player->getId()) {
-		pPlayer* newHost = &(players.front());
-		host = newHost->first;
-		notifyAction("hostChanged", newHost->second);
-		wAPI.changeHost();
-	}
+	int newPlayerCount = players.size();
 	
 	if (started) {
 		// whole game has only one player left
-		if (players.size() < 2) {
+		if (newPlayerCount < 2) {
 			cout << "spiel beendet" << endl;
+			Player* lastPlayer = players.front().second;
 			if (roundStarted) {
 				// notify web server
-				wAPI.roundEnded(players.front().second, origPlayers);
+				wAPI.roundEnded(lastPlayer, origPlayers);
 			}
-			Player* lastPlayer = players.front().second;
+			finished = true;
 			notifyAction("finished", lastPlayer);
-			// also destroy last player
-			delete lastPlayer;
-			destroyGame = true;
 		
 		} else if (roundStarted) {
 			bool newTurn = false;
@@ -232,12 +223,20 @@ bool Game::removePlayer(Player* player) {
 		}
 
 	}
+	
 	// last player left -> destroy it
-	if (players.size() < 1 || destroyGame) {
+	if (newPlayerCount < 1) {
 		cout << "spiel zerstört" << endl;
 		wAPI.finishGame();
 		destroyGame = true;
+	// check if host has to be changed
+	} else if (newPlayerCount > 0 && host == player->getId() && !finished) {
+		pPlayer* newHost = &(players.front());
+		host = newHost->first;
+		notifyAction("hostChanged", newHost->second);
+		wAPI.changeHost();
 	}
+	
 	delete player;
 	// returns true if the game has to be removed from game list in server.cpp
 	return destroyGame;

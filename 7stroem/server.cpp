@@ -115,47 +115,41 @@ void Server::checkConnections() {
 // checks for missing players and removes them from their games if neccessary
 void Server::checkMissingPlayers() {
 	
-	vector<GameContainer*> gamesRemoved;
 	vector<PlayerRequest*>::iterator vIter;
+	// TODO: und was ist, wenn einer sich gar nicht erst verbindet??? bitte alle spieler aller spiele durchgehen und nicht nur die requests
 	for (vIter = missingPlayers.begin(); vIter != missingPlayers.end(); ++vIter) {
 		
 		// is completely disconnected
 		Player* player = (*vIter)->player;
 		GameContainer* gameCon = (*vIter)->gameCon;
-		// check if this games has not yet been removed
-		if (find(gamesRemoved.begin(), gamesRemoved.end(), gameCon) == gamesRemoved.end()) {
 			
-			cout << player << " check" << endl;
-			if (!player->isConnected()) {
-				if (player->isMissing()) {
-					cout << "player disconnected" << endl;
-					Game* game = gameCon->game;
-					cout << game << endl;
+		cout << player << " check" << endl;
+		if (!player->isConnected()) {
+			if (player->isMissing()) {
+				cout << "player disconnected" << endl;
+				Game* game = gameCon->game;
+				cout << game << endl;
+				
+				// lock mutex
+				boost::mutex::scoped_lock lock(gameCon->mutex);
+				
+				// get number of players to determine if any player has to be notified of the finished game
+				if (game->removePlayer(player)) {
+					// no players left -> remove game
+					games.erase(game->getId());
 					
-					// lock mutex
-					boost::mutex::scoped_lock lock(gameCon->mutex);
-					
-					// get number of players to determine if any player has to be notified of the finished game
-					if (game->removePlayer(player)) {
-						// no players left -> remove game
-						games.erase(game->getId());
-						gamesRemoved.push_back(gameCon);
-						sendToWaiting(gameCon);
-						
-						// unlock mutex before destroying the object
-						lock.unlock();
-						// destroy object
-						delete gameCon;
-					} else {
-						sendToWaiting(gameCon);
-					}
-
-				// if player is disconnected but not yet missing we have to skip removal of player from missing list
+					// unlock mutex before destroying the object
+					lock.unlock();
+					// destroy object
+					delete gameCon;
 				} else {
-					continue;
+					sendToWaiting(gameCon);
 				}
+
+			// if player is disconnected but not yet missing we have to skip removal of player from missing list
+			} else {
+				continue;
 			}
-		
 		}
 		
 		delete *vIter;
