@@ -41,24 +41,27 @@ struct pPlayer {
 };
 
 class Game {
+	
+	typedef vector<Player*> vPlayer;
+	typedef vector<pPlayer> vpPlayer;
+	
 	public:
 	// constructor: set id and create card deck
 	Game(int, int);
 	~Game();
 	Player* addPlayer(int playerId, string authcode);
-	bool removePlayer(Player* player);
+	bool removePlayer(vpPlayer::iterator);
 	Player* authenticate(int playerId, string authcode);
 	void getActionsSince(pair<vector<Action*>, int>*);
 	bool registerAction(Player*, string action, string content);
 	bool registerHostAction(Player*, string);
+	int checkPlayers();
 	int getId();
 	int getHost() {
 		return host;
 	}
 	
 	private:
-	typedef vector<Player*> vPlayer;
-	typedef vector<pPlayer> vpPlayer;
 	// contains id of game
 	const int gameId;
 	int host;

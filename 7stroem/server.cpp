@@ -16,6 +16,7 @@ void Server::start() {
 	
 	// check connections and missing players periodically
 	boost::thread checkingConns(boost::bind(&Server::checkConnections, this));
+	boost::thread checkingPlayers(boost::bind(&Server::checkPlayers, this));
 	
 	// don't stop here - wait for listening thread
 	listening.join();
@@ -43,7 +44,7 @@ void Server::checkConnections() {
 	Socket checkSock;
 	int ready, sockMax;
 	string dummy;
-	vector<PlayerRequest*>::iterator vIter;
+	vPRequest::iterator vIter;
 	fd_set sockSet;
 	struct timeval timeout;
 	timeout.tv_sec = 0;
@@ -51,10 +52,7 @@ void Server::checkConnections() {
 	
 	while (true) {
 		
-		sleep(3);
-		
-		// check if any players have to be removed
-		checkMissingPlayers();
+		sleep(2);
 		
 		FD_ZERO(&sockSet);
 		sockMax = -1;
@@ -90,11 +88,11 @@ void Server::checkConnections() {
 					checkSock.close();
 					// mark player as disconnected
 					(*vIter)->player->setDisconnected();
-					missingPlayers.push_back(*vIter);
 					// remove from set
 					FD_CLR((*vIter)->sock, &sockSet);
 					// remove from request list
 					(*vIter)->gameCon->requestsWaiting.erase(find((*vIter)->gameCon->requestsWaiting.begin(), (*vIter)->gameCon->requestsWaiting.end(), *vIter));
+					delete *vIter;
 					// remove from open connections list
 					vIter = openConnections.erase(vIter)-1;
 					cout << "connection closed" << endl;
@@ -113,49 +111,39 @@ void Server::checkConnections() {
 }
 
 // checks for missing players and removes them from their games if neccessary
-void Server::checkMissingPlayers() {
+void Server::checkPlayers() {
+	mGameCon::iterator mIter;
 	
-	vector<PlayerRequest*>::iterator vIter;
-	// TODO: und was ist, wenn einer sich gar nicht erst verbindet??? bitte alle spieler aller spiele durchgehen und nicht nur die requests
-	for (vIter = missingPlayers.begin(); vIter != missingPlayers.end(); ++vIter) {
-		
-		// is completely disconnected
-		Player* player = (*vIter)->player;
-		GameContainer* gameCon = (*vIter)->gameCon;
+	while (true) {
+		sleep(3);
+
+		boost::mutex::scoped_lock lock(mutexGames);
+		for (mIter = games.begin(); mIter != games.end(); ) {
+			GameContainer* gameCon = mIter->second;
+			Game* game = gameCon->game;
 			
-		cout << player << " check" << endl;
-		if (!player->isConnected()) {
-			if (player->isMissing()) {
-				cout << "player disconnected" << endl;
-				Game* game = gameCon->game;
-				cout << game << endl;
+			// lock mutex
+			boost::mutex::scoped_lock lock(gameCon->mutex);
+			
+			// check if any players have left the game
+			int action = game->checkPlayers();
+			if (action == 2) {
+				// no players left -> remove game
+				games.erase(mIter++);
 				
-				// lock mutex
-				boost::mutex::scoped_lock lock(gameCon->mutex);
-				
-				// get number of players to determine if any player has to be notified of the finished game
-				if (game->removePlayer(player)) {
-					// no players left -> remove game
-					games.erase(game->getId());
-					
-					// unlock mutex before destroying the object
-					lock.unlock();
-					// destroy object
-					delete gameCon;
-				} else {
+				// unlock mutex before destroying the object
+				lock.unlock();
+				// destroy object
+				delete gameCon;
+			} else {
+				if (action == 1) {
 					sendToWaiting(gameCon);
 				}
-
-			// if player is disconnected but not yet missing we have to skip removal of player from missing list
-			} else {
-				continue;
+				mIter++;
 			}
 		}
-		
-		delete *vIter;
-		vIter = missingPlayers.erase(vIter)-1;
-	}
-		
+	
+	}		
 }
 
 // handles an incoming connection after being accepted by the listening socket
@@ -307,7 +295,7 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 // send all actions to waiting players
 void Server::sendToWaiting(GameContainer* gameCon) {
 	// notifying all waiting players of the new actions
-	vector<PlayerRequest*>::iterator rIter;
+	vPRequest::iterator rIter;
 	// make sure it doesn't interfere with checkConnections()
 	boost::mutex::scoped_lock lock(mutexConn);
 	for (rIter = gameCon->requestsWaiting.begin(); rIter != gameCon->requestsWaiting.end(); ++rIter) {
@@ -332,32 +320,29 @@ bool Server::handleServerRequest(HTTPrequest* request) {
 	// requests with game id
 	} else if (request->getGet("gId") != "") {
 		// get game
-		GameContainer* gameCon = games[ atoi(request->getGet("gId").c_str()) ];
-		// check if game exists
-		if (gameCon != NULL) {
-			// register player
-			if (request->getGet("request") == "registerPlayer") {
-				if (request->getGet("pId") != "" && request->getGet("pAuthcode") != "") {
-					Player* newPlayer = gameCon->game->addPlayer( atoi(request->getGet("pId").c_str()), request->getGet("pAuthcode") );
-					if (newPlayer == NULL) {
-						return false;
-					}
-					// add to missing list - the player might never connect in the first place
-					boost::mutex::scoped_lock lock(mutexConn);
-					// push back a dummy player request
-					missingPlayers.push_back(new PlayerRequest(gameCon, newPlayer, -1, -1));
-					lock.unlock();
-					sendToWaiting(gameCon);
-					return true;
+		mGameCon::iterator mIter = games.find(atoi(request->getGet("gId").c_str()));
+		if (mIter == games.end()) {
+			// game not found
+			return false;
+		}
+		GameContainer* gameCon = mIter->second;
+		// register player
+		if (request->getGet("request") == "registerPlayer") {
+			if (request->getGet("pId") != "" && request->getGet("pAuthcode") != "") {
+				Player* newPlayer = gameCon->game->addPlayer( atoi(request->getGet("pId").c_str()), request->getGet("pAuthcode") );
+				if (newPlayer == NULL) {
+					return false;
 				}
-			/*
-			// start game - obsolete
-			} else if (request->getGet("request") == "startGame") {
-				gameCon->game->start();
 				sendToWaiting(gameCon);
 				return true;
-			*/
 			}
+		/*
+		// start game - obsolete
+		} else if (request->getGet("request") == "startGame") {
+			gameCon->game->start();
+			sendToWaiting(gameCon);
+			return true;
+		*/
 		}
 	}
 	return false;
@@ -412,6 +397,7 @@ bool Server::sendActions(PlayerRequest* request) {
 // creates a new game and stores it under given id
 bool Server::createGame(int gameId, int host) {
 	// check if game id not yet created
+	boost::mutex::scoped_lock lock(mutexGames);
 	if (games.find(gameId) == games.end()) {
 		games[gameId] = new GameContainer(gameId, host);
 		return true;

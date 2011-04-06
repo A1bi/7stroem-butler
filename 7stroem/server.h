@@ -37,13 +37,14 @@ public:
 	void start();
 	
 private:
-	map<int, GameContainer*> games;
-	vector<PlayerRequest*> openConnections;
-	vector<PlayerRequest*> missingPlayers;
+	typedef map<int, GameContainer*> mGameCon;
+	typedef vector<PlayerRequest*> vPRequest;
+	mGameCon games;
+	vPRequest openConnections;
 	static const string authcode;
 	
 	void checkConnections();
-	void checkMissingPlayers();
+	void checkPlayers();
 	void listen(Socket*);
 	void handleNewConnection(int);
 	void handlePlayerRequest(HTTPrequest*, Socket*);
@@ -56,6 +57,7 @@ private:
 	
 	// mutexes
 	boost::mutex mutexConn;
+	boost::mutex mutexGames;
 	
 };
 

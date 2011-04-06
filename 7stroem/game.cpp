@@ -57,6 +57,8 @@ void Game::startRound() {
 	}
 	// initial turn
 	turn = playersRound.end()-1;
+	// set knock turn to a dummy value to prevent errors later
+	knockTurn = playersRound.begin();
 	roundStarted = true;
 	origPlayers = playersRound.size();
 	// web server
@@ -165,18 +167,12 @@ Player* Game::addPlayer(int playerId, string authcode) {
 }
 
 // removes player from game
-bool Game::removePlayer(Player* player) {
-	bool destroyGame = false, finished = false;
-	vpPlayer::iterator pIter = find(players.begin(), players.end(), player->getId());
-	if (pIter == players.end()) {
-		// player not found
-		return false;
-	}
-	
-	// notify web server and database
-	wAPI.playerQuit(player);
-	notifyAction("playerQuit", player);
+bool Game::removePlayer(vpPlayer::iterator pIter) {
+	Player* player = pIter->second;
+	// remove from list
 	players.erase(pIter);
+	
+	bool destroyGame = false, finished = false;
 	int newPlayerCount = players.size();
 	
 	if (started) {
@@ -193,13 +189,17 @@ bool Game::removePlayer(Player* player) {
 		
 		} else if (roundStarted) {
 			bool newTurn = false;
-			if (*turn == player) {
+			// from from round and small round
+			removePlayerFromList(playersRound, player, &turn);
+			removePlayerFromList(playersSmallRound, player, &turn);
+			
+			/*if (*turn == player) {
 				nextTurn();
 				newTurn = true;
 			} else if (*knockTurn == player && !activeKnock.empty()) {
 				nextKnockTurn();
 				newTurn = true;
-			}
+			}*/newTurn = true;
 			if (lastWinner == player) {
 				if (turn == playersSmallRound.end()) {
 					lastWinner = playersSmallRound.front();
@@ -207,8 +207,7 @@ bool Game::removePlayer(Player* player) {
 					lastWinner = *turn;
 				}
 			}
-			removePlayerFromList(playersRound, player);
-			removePlayerFromList(playersSmallRound, player);
+			
 			// round has one player left
 			if (playersRound.size() < 2) {
 				endRound();
@@ -218,7 +217,7 @@ bool Game::removePlayer(Player* player) {
 				cout << "kleine runde beendet" << endl;
 				endSmallRound();
 			} else if (newTurn) {
-				notifyAction("turn", *turn);
+				notifyTurn();
 			}
 		}
 
@@ -238,7 +237,7 @@ bool Game::removePlayer(Player* player) {
 	}
 	
 	delete player;
-	// returns true if the game has to be removed from game list in server.cpp
+	// returns true if the game has to be destroyed
 	return destroyGame;
 }
 
@@ -551,6 +550,32 @@ Player* Game::getPlayer(int playerId) {
 	}
 	// not found
 	return NULL;
+}
+
+// check all players if they are still connected
+int Game::checkPlayers() {
+	bool action = false;
+	for (vpPlayer::iterator pIter = players.begin(); pIter != players.end(); pIter++) {
+		Player* player = pIter->second;
+		if (player->isConnected()) continue;
+		
+		if (player->isMissing()) {
+			// notify web server and database
+			wAPI.playerQuit(player);
+			notifyAction("playerQuit", player);
+			
+			if (removePlayer(pIter)) {
+				// game has to be removed from game list in server.cpp
+				return 2;
+			} else {
+				action = true;
+			}
+			pIter--;
+
+		}
+		
+	}
+	return action;
 }
 
 // open an active knock
