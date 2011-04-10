@@ -172,10 +172,10 @@ bool Game::removePlayer(vpPlayer::iterator pIter) {
 	// remove from list
 	players.erase(pIter);
 	
-	bool destroyGame = false, finished = false;
+	bool destroyGame = false;
 	int newPlayerCount = players.size();
 	
-	if (started) {
+	if (started && !finished) {
 		// whole game has only one player left
 		if (newPlayerCount < 2) {
 			cout << "spiel beendet" << endl;
@@ -192,7 +192,7 @@ bool Game::removePlayer(vpPlayer::iterator pIter) {
 			// from from round and small round
 			removePlayerFromList(playersRound, player, &turn);
 			removePlayerFromList(playersSmallRound, player, &turn);
-			
+			// TODO: check this part - doesn't work at all!!
 			/*if (*turn == player) {
 				nextTurn();
 				newTurn = true;
@@ -246,9 +246,11 @@ bool Game::registerHostAction(Player* tPlayer, string action) {
 	if (host != tPlayer->getId()) throw ActionExcept("you are not the host of this game");
 	if (roundStarted) {
 		throw ActionExcept("round has already started");
-		return false;
 	}
 	
+	if (players.size() < 2) {
+		throw ActionExcept("too few players");
+	}
 	if (action == "startGame") {
 		if (started) throw ActionExcept("game is already running");
 		start();
@@ -360,17 +362,23 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 				vPlayer::iterator pIter;
 				// check if suit is equal to last winner and also number is higher
 				for (pIter = playersSmallRound.begin(); pIter != playersSmallRound.end(); ++pIter) {
+					cout << *pIter << " " << lastWinner << endl;
 					if (*pIter == lastWinner) continue;
 					if ((*(*pIter)->lastStack()) > (*lastWinner->lastStack())) {
 						lastWinner = *pIter;
+						// it's now the player's turn who has won
 						turn = pIter;
-					} else if (turns == 4) {
-						// last turn of small round -> player lost this round
-						(*pIter)->lose();
 					}
 				}
-				// it's now the player's turn who has won
+				// last turn of small round
 				if (turns == 4) {
+					// check which players have to get strikes
+					for (pIter = playersSmallRound.begin(); pIter != playersSmallRound.end(); ++pIter) {
+						if (*pIter != lastWinner) {
+							// player is not the winner -> he obviously lost
+							(*pIter)->lose();
+						}
+					}
 					endSmallRound();
 					newTurn = false;
 				} else {

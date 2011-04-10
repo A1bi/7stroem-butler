@@ -2,11 +2,13 @@
 using namespace std;
 #include "player.h"
 #include "game.h"
+#include <iostream>
 
 // constructor
 Player::Player(int i, string a, Game* g): PlayerId(i), authcode(a), game(g) {
 	connected = 1;
 	setDisconnected();
+	lastSeen += 10;
 }
 
 // returns player id
@@ -141,6 +143,7 @@ void Player::incStrikes(int newStrikes) {
 
 // player loses
 void Player::lose() {
+	cout << calls << endl;
 	incStrikes(calls);
 }
 

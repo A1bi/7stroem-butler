@@ -77,7 +77,7 @@ class Game {
 	// array containing the whole card deck
 	vector<Card*> allCards;
 	int turns, knocks;
-	bool started, roundStarted, someonePoor, blindKnocked;
+	bool started, roundStarted, finished, someonePoor, blindKnocked;
 	WebAPI wAPI;
 	
 	void start();
