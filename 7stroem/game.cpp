@@ -42,8 +42,18 @@ void Game::start() {
 	started = true;
 	// notify web server
 	wAPI.startGame();
+	
+	// get player order for notification
+	stringstream pIds;
+	for (vpPlayer::iterator pIter = players.begin(); pIter != players.end(); pIter++) {
+		if (pIter != players.begin()) {
+			pIds << ",";
+		}
+		pIds << pIter->second->getId();
+	}
+	
 	// notify players
-	notifyAction("started");
+	notifyAction("started", NULL, pIds.str());
 	// start first round
 	startRound();
 }
@@ -188,18 +198,18 @@ bool Game::removePlayer(vpPlayer::iterator pIter) {
 			notifyAction("finished", lastPlayer);
 		
 		} else if (roundStarted) {
+			// check if turns have to be rearranged
 			bool newTurn = false;
-			// from from round and small round
-			removePlayerFromList(playersRound, player, &turn);
-			removePlayerFromList(playersSmallRound, player, &turn);
-			// TODO: check this part - doesn't work at all!!
-			/*if (*turn == player) {
+			if (*turn == player) {
 				nextTurn();
 				newTurn = true;
 			} else if (*knockTurn == player && !activeKnock.empty()) {
-				nextKnockTurn();
+				removeFromKnock(player);
 				newTurn = true;
-			}*/newTurn = true;
+			}
+			// remove from from round and small round
+			removePlayerFromList(playersRound, player, &turn);
+			removePlayerFromList(playersSmallRound, player, &turn);
 			if (lastWinner == player) {
 				if (turn == playersSmallRound.end()) {
 					lastWinner = playersSmallRound.front();
@@ -362,7 +372,6 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 				vPlayer::iterator pIter;
 				// check if suit is equal to last winner and also number is higher
 				for (pIter = playersSmallRound.begin(); pIter != playersSmallRound.end(); ++pIter) {
-					cout << *pIter << " " << lastWinner << endl;
 					if (*pIter == lastWinner) continue;
 					if ((*(*pIter)->lastStack()) > (*lastWinner->lastStack())) {
 						lastWinner = *pIter;
