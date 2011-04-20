@@ -251,12 +251,14 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 						
 						string cards[4];
 						tPlayer->getHand(cards);
+						// no cards got ? -> player is out
+						if (cards[0].empty()) {
+							throw "you don't have any cards because you are out";
+						}
 						for (int i = 0; i < 4; i++) {
 							jsonCards->addChild(cards[i]);
 						}
-					}
-					
-					if (request->getGet("action") != "flipHand") {
+					} else {
 						// send new actions to waiting players
 						sendToWaiting(myGameCon);
 					}

@@ -18,6 +18,7 @@ Game::Game(int i, int h): gameId(i), host(h), wAPI(this) {
 	}
 	roundStarted = false;
 	started = false;
+	finished = false;
 }
 
 // destructor
@@ -597,9 +598,16 @@ int Game::checkPlayers() {
 
 // open an active knock
 void Game::knock(Player* player, int k) {
+	// copy all players to knock
 	activeKnock = playersSmallRound;
-	removeFromKnock(player);
-	knockTurn = activeKnock.begin();
+	// find position of the one who knocked
+	knockTurn = find(activeKnock.begin(), activeKnock.end(), player);
+	// remove him because he cannot call or fold on a knock he intiated
+	activeKnock.erase(knockTurn);
+	// by erasing him we also updated knockTurn so now we have to check if it is still correct
+	if (knockTurn == activeKnock.end()) {
+		knockTurn = activeKnock.begin();
+	}
 	knocks = k;
 }
 
