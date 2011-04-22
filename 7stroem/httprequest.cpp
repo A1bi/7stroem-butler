@@ -1,4 +1,5 @@
 #include <sstream>
+#include <stdlib.h>
 #include "http.h"
 #include "httprequest.h"
 

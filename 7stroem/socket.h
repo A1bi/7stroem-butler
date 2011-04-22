@@ -1,6 +1,7 @@
 // socket.h
 #ifndef _SOCKET_H_
 #define _SOCKET_H_
+#include <cstring>
 #include <string>
 #include <sys/types.h>
 #include <sys/socket.h>

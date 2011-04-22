@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "http.h"
 #include "httpresponse.h"
 

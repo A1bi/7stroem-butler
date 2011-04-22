@@ -287,7 +287,7 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 		
 	}
 	// some error occurred ?
-	catch (char* msg) {
+	catch (const char* msg) {
 		sendError(sock, jsonp, string(msg));
 	}
 	// action not allowed ?
