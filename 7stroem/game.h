@@ -76,7 +76,7 @@ class Game {
 	vector<Action*> actions;
 	// array containing the whole card deck
 	vector<Card*> allCards;
-	int turns, knocks;
+	int turns, knocks, cardsLaid;
 	bool started, roundStarted, finished, someonePoor, blindKnocked;
 	WebAPI wAPI;
 	

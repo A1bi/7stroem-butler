@@ -123,7 +123,7 @@ void Server::checkPlayers() {
 			Game* game = gameCon->game;
 			
 			// lock mutex
-			boost::mutex::scoped_lock lock(gameCon->mutex);
+			boost::mutex::scoped_lock gameLock(gameCon->mutex);
 			
 			// check if any players have left the game
 			int action = game->checkPlayers();
@@ -132,7 +132,7 @@ void Server::checkPlayers() {
 				games.erase(mIter++);
 				
 				// unlock mutex before destroying the object
-				lock.unlock();
+				gameLock.unlock();
 				// destroy object
 				delete gameCon;
 			} else {
@@ -161,20 +161,24 @@ void Server::handleNewConnection(int sockNo) {
 	if (request.getUri() == "/player") {
 		handlePlayerRequest(&request, &recvSock);
 	
-	// it's a request by the 7stroem server
-	} else if (request.getUri() == "/server") {
+	// it's something else
+	} else {
 		HTTPresponse response;
-		if (request.getGet("authcode") == authcode && handleServerRequest(&request)) {
+		// request by the 7stroem server
+		if (request.getUri() == "/server") {
+			if (request.getGet("authcode") == authcode && handleServerRequest(&request)) {
+				response << "ok";
+			} else {
+				response << "error";
+			}
+		// user only wants to test the connection
+		} else if (request.getUri() == "/test") {
 			response << "ok";
+		// unknown action
 		} else {
-			response << "error";
+			response << "unknown action";
 		}
 		response.send(&recvSock);
-		recvSock.close();
-		
-	// unknown action
-	} else {
-		recvSock.send("unknown action");
 		recvSock.close();
 	}
 	
@@ -187,6 +191,7 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 	Game* myGame;
 	int playerId = atoi(request->getGet("pId").c_str());
 	int gameId = atoi(request->getGet("gId").c_str());
+	bool jsonp = (request->getGet("jsonp") == "") ? false : true;
 	
 	try {
 		
@@ -219,7 +224,7 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 				// get since argument and check if not empty
 				int since = atoi(request->getGet("since").c_str());
 				// create request object
-				PlayerRequest* newRequest = new PlayerRequest(myGameCon, tPlayer, since, sock->getSock());
+				PlayerRequest* newRequest = new PlayerRequest(myGameCon, tPlayer, since, sock->getSock(), jsonp);
 				
 				// send actions if there are already new actions
 				if (!sendActions(newRequest)) {
@@ -269,7 +274,7 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 				}
 				
 				// send response
-				sendResponse(sock, &jsonResponse);
+				sendResponse(sock, &jsonResponse, jsonp);
 				
 				
 			// unknown request -> close
@@ -285,11 +290,11 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 	}
 	// some error occurred ?
 	catch (char* msg) {
-		sendError(sock, string(msg));
+		sendError(sock, jsonp, string(msg));
 	}
 	// action not allowed ?
 	catch (ActionExcept& e) {
-		sendError(sock, e.getErrorMsg(), e.getErrorId());
+		sendError(sock, jsonp, e.getErrorMsg(), e.getErrorId());
 	}
 	
 }
@@ -387,7 +392,7 @@ bool Server::sendActions(PlayerRequest* request) {
 	// send response to player
 	Socket actionsSock;
 	actionsSock.setSock(request->sock);
-	sendResponse(&actionsSock, &jsonResponse);
+	sendResponse(&actionsSock, &jsonResponse, request->jsonp);
 	
 	// mark this player's client as disconnected
 	request->player->setDisconnected();
@@ -408,10 +413,15 @@ bool Server::createGame(int gameId, int host) {
 }
 
 // send a response as a JSON object to player
-void Server::sendResponse(Socket* sock, JSONobject* response) {
+void Server::sendResponse(Socket* sock, JSONobject* response, bool jsonp) {
 	// prepare reponse
 	HTTPresponse httpResponse;
-	httpResponse << "game.processResponse(" + response->str() + ");";
+	if (jsonp) {
+		httpResponse << "game.processResponse(" + response->str() + ");";
+	} else {
+		httpResponse << response->str();
+	}
+
 	// send response to player
 	httpResponse.send(sock);
 	
@@ -420,7 +430,7 @@ void Server::sendResponse(Socket* sock, JSONobject* response) {
 }
 
 // send error back to player
-void Server::sendError(Socket* sock, string msg, string id) {
+void Server::sendError(Socket* sock, bool jsonp, string msg, string id) {
 	
 	// success
 	JSONobject jsonResponse;
@@ -431,5 +441,5 @@ void Server::sendError(Socket* sock, string msg, string id) {
 	error->addChild("message", msg);
 	
 	// send to player
-	sendResponse(sock, &jsonResponse);
+	sendResponse(sock, &jsonResponse, jsonp);
 }

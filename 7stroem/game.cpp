@@ -125,6 +125,7 @@ void Game::startSmallRound() {
 	nextTurn();
 	
 	turns = 1;
+	cardsLaid = 0;
 	blindKnocked = false;
 	// new winner is now the player who is first
 	lastWinner = *turn;
@@ -367,8 +368,10 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 			notifyAction("laidStack", tPlayer, lCard->getCardId());
 			nextTurn();
 			bool newTurn = true;
-			// small round complete
-			if (*turn == lastWinner) {
+			// small round complete ?
+			cardsLaid++;
+			if (cardsLaid >= playersSmallRound.size()) {
+				cardsLaid = 0;
 				// check who won
 				vPlayer::iterator pIter;
 				// check if suit is equal to last winner and also number is higher

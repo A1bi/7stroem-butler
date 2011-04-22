@@ -15,9 +15,10 @@ struct GameContainer;
 
 struct PlayerRequest {
 	const int since, sock;
+	bool jsonp;
 	GameContainer* const gameCon;
 	Player* const player;
-	PlayerRequest(GameContainer* g, Player* p, int si, int so): gameCon(g), player(p), since(si), sock(so) {}
+	PlayerRequest(GameContainer* g, Player* p, int si, int so, bool j): gameCon(g), player(p), since(si), sock(so), jsonp(j) {}
 };
 
 struct GameContainer {
@@ -51,13 +52,12 @@ private:
 	bool handleServerRequest(HTTPrequest*);
 	bool sendActions(PlayerRequest*);
 	void sendToWaiting(GameContainer* gameCon);
-	void sendResponse(Socket* sock, JSONobject* response);
-	void sendError(Socket*, string = "", string = "");
+	void sendResponse(Socket* sock, JSONobject* response, bool);
+	void sendError(Socket*, bool, string, string = "");
 	bool createGame(int, int);
 	
 	// mutexes
-	boost::mutex mutexConn;
-	boost::mutex mutexGames;
+	boost::mutex mutexConn, mutexGames;
 	
 };
 
