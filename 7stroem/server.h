@@ -24,7 +24,7 @@ struct PlayerRequest {
 struct GameContainer {
 	Game* const game;
 	vector<PlayerRequest*> requestsWaiting;
-	boost::mutex mutex;
+	//boost::mutex mutex;
 	
 	GameContainer(int id, int host): game(new Game(id, host)) {}
 	~GameContainer() {

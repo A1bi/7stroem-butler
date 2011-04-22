@@ -193,3 +193,8 @@ void Player::getHand(string cards[4]) {
 void Player::flipHand() {
 	flipped = true;
 }
+
+// just returns the number of cards the player has laid on stack
+int Player::cardsOnStack() {
+	return stack.size();
+}

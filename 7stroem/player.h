@@ -35,6 +35,7 @@ class Player {
 	void newSmallRound();
 	void getHand(string[4]);
 	void flipHand();
+	int cardsOnStack();
 	
 	private:
 	const int PlayerId;

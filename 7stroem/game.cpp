@@ -205,9 +205,20 @@ bool Game::removePlayer(vpPlayer::iterator pIter) {
 			if (*turn == player) {
 				nextTurn();
 				newTurn = true;
-			} else if (*knockTurn == player && !activeKnock.empty()) {
-				removeFromKnock(player);
-				newTurn = true;
+			} else {
+				// check if he has already laid a card
+				if (player->cardsOnStack() >= turns) {
+					cardsLaid--;
+				}
+			}
+
+			if (!activeKnock.empty()) {
+				if (*knockTurn == player) {
+					newTurn = true;
+					removeFromKnock();
+				} else {
+					removeFromKnock(player);
+				}
 			}
 			// remove from from round and small round
 			removePlayerFromList(playersRound, player, &turn);
@@ -323,7 +334,7 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 		if (tPlayer->fold()) {
 			notifyAction("folded", tPlayer);
 			// remove player from active knock
-			removeFromKnock(tPlayer);
+			removeFromKnock();
 			
 			// remove player from active list
 			removePlayerFromList(playersSmallRound, tPlayer, &turn);
@@ -334,7 +345,6 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 				endSmallRound();
 				
 			} else {
-				nextKnockTurn();
 				notifyTurn();
 				// last winner is now the player who has opened this knock
 				if (lastWinner == tPlayer) {
@@ -438,10 +448,9 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 	} else if (action == "call") {
 		// check if the player didn't call already
 		if (find(activeKnock.begin(), activeKnock.end(), tPlayer) != activeKnock.end()) {
-			removeFromKnock(tPlayer);
+			removeFromKnock();
 			tPlayer->call(knocks);
 			notifyAction("called", tPlayer);
-			nextKnockTurn();
 			notifyTurn();
 			return true;
 		}
@@ -550,12 +559,6 @@ void Game::nextTurn() {
 	}
 }
 
-void Game::nextKnockTurn() {
-	if (++knockTurn >= activeKnock.end()) {
-		knockTurn = activeKnock.begin();
-	}
-}
-
 /*// sets the turn to the given player
 void Game::setTurn(Player *tPlayer) {
 	turn = find(playersSmallRound.begin(), playersSmallRound.end(), tPlayer);
@@ -606,11 +609,7 @@ void Game::knock(Player* player, int k) {
 	// find position of the one who knocked
 	knockTurn = find(activeKnock.begin(), activeKnock.end(), player);
 	// remove him because he cannot call or fold on a knock he intiated
-	activeKnock.erase(knockTurn);
-	// by erasing him we also updated knockTurn so now we have to check if it is still correct
-	if (knockTurn == activeKnock.end()) {
-		knockTurn = activeKnock.begin();
-	}
+	removeFromKnock();
 	knocks = k;
 }
 
@@ -630,5 +629,14 @@ bool Game::removePlayerFromList(vPlayer &oPlayers, Player *delPlayer, vPlayer::i
 
 // remove player from active knock
 void Game::removeFromKnock(Player* player) {
-	removePlayerFromList(activeKnock, player);
+	if (player != NULL) {
+		removePlayerFromList(activeKnock, player, &knockTurn);
+		knockTurn++;
+	} else {
+		activeKnock.erase(knockTurn);
+	}
+	// by erasing him we also updated knockTurn so now we have to check if it is still correct
+	if (knockTurn == activeKnock.end()) {
+		knockTurn = activeKnock.begin();
+	}
 }

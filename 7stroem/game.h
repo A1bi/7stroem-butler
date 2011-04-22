@@ -87,7 +87,6 @@ class Game {
 	void notifyTurn(bool = false);
 	void giveCards();
 	void nextTurn();
-	void nextKnockTurn();
 	//void setTurn(Player *tPlayer);
 	void startRound();
 	void startSmallRound();
@@ -95,7 +94,7 @@ class Game {
 	void endRound();
 	void knock(Player*, int);
 	bool removePlayerFromList(vPlayer&, Player*, vPlayer::iterator* = NULL);
-	void removeFromKnock(Player*);
+	void removeFromKnock(Player* = NULL);
 	
 };
 

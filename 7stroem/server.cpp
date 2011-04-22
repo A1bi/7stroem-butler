@@ -56,7 +56,7 @@ void Server::checkConnections() {
 		
 		FD_ZERO(&sockSet);
 		sockMax = -1;
-		boost::mutex::scoped_lock lock(mutexConn);
+		boost::lock_guard<boost::mutex> lock(mutexConn);
 		// create a socket set which contains all open connections
 		for (vIter = openConnections.begin(); vIter != openConnections.end(); ++vIter) {
 			// first check if pointers are still valid (may have been deleted after a player was removed)
@@ -117,13 +117,13 @@ void Server::checkPlayers() {
 	while (true) {
 		sleep(3);
 
-		boost::mutex::scoped_lock lock(mutexGames);
+		boost::lock_guard<boost::mutex> lock(mutexGames);
 		for (mIter = games.begin(); mIter != games.end(); ) {
 			GameContainer* gameCon = mIter->second;
 			Game* game = gameCon->game;
 			
 			// lock mutex
-			boost::mutex::scoped_lock gameLock(gameCon->mutex);
+			//boost::mutex::scoped_lock gameLock(gameCon->mutex);
 			
 			// check if any players have left the game
 			int action = game->checkPlayers();
@@ -131,8 +131,6 @@ void Server::checkPlayers() {
 				// no players left -> remove game
 				games.erase(mIter++);
 				
-				// unlock mutex before destroying the object
-				gameLock.unlock();
 				// destroy object
 				delete gameCon;
 			} else {
@@ -206,8 +204,8 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 			throw "game not found";
 		}
 		
-		// lock this game
-		boost::mutex::scoped_lock lock(myGameCon->mutex);
+		// lock games
+		boost::lock_guard<boost::mutex> lock(mutexGames);
 		
 		// authenticate player and get its object
 		Player* tPlayer = myGame->authenticate(playerId, request->getGet("authcode"));
@@ -228,7 +226,7 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 				
 				// send actions if there are already new actions
 				if (!sendActions(newRequest)) {
-					boost::mutex::scoped_lock lock(mutexConn);
+					boost::lock_guard<boost::mutex> lock(mutexConn);
 					// put player into waiting list and send actions later when they occur
 					myGameCon->requestsWaiting.push_back(newRequest);
 					openConnections.push_back(newRequest);
@@ -296,6 +294,27 @@ void Server::handlePlayerRequest(HTTPrequest* request, Socket* sock) {
 	catch (ActionExcept& e) {
 		sendError(sock, jsonp, e.getErrorMsg(), e.getErrorId());
 	}
+	// safety net: some other error occurred, games has crashed -> bug
+	catch (...) {
+		sock->close();
+		// remove game
+		games.erase(gameId);
+		// try to notify all players that game has crashed
+		try {
+			Socket sock;
+			boost::lock_guard<boost::mutex> lock(mutexConn);
+			for (vPRequest::iterator rIter = myGameCon->requestsWaiting.begin(); rIter != myGameCon->requestsWaiting.end(); ++rIter) {
+				sock.setSock((*rIter)->sock);
+				sendError(&sock, (*rIter)->jsonp, "the game crashed. seems to be a bug. sorry!", "fatalCrash");
+			}
+		}
+		// couldn't even do this. bummer.
+		catch (...) {
+			
+		}
+		// destroy object
+		delete myGameCon;
+	}
 	
 }
 
@@ -304,7 +323,7 @@ void Server::sendToWaiting(GameContainer* gameCon) {
 	// notifying all waiting players of the new actions
 	vPRequest::iterator rIter;
 	// make sure it doesn't interfere with checkConnections()
-	boost::mutex::scoped_lock lock(mutexConn);
+	boost::lock_guard<boost::mutex> lock(mutexConn);
 	for (rIter = gameCon->requestsWaiting.begin(); rIter != gameCon->requestsWaiting.end(); ++rIter) {
 		// send new actions
 		sendActions(*rIter);
@@ -404,7 +423,7 @@ bool Server::sendActions(PlayerRequest* request) {
 // creates a new game and stores it under given id
 bool Server::createGame(int gameId, int host) {
 	// check if game id not yet created
-	boost::mutex::scoped_lock lock(mutexGames);
+	boost::lock_guard<boost::mutex> lock(mutexGames);
 	if (games.find(gameId) == games.end()) {
 		games[gameId] = new GameContainer(gameId, host);
 		return true;

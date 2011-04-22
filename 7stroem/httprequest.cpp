@@ -6,7 +6,7 @@
 HTTPrequest::HTTPrequest(string* d) {
 	stringstream data, tmpUri;
 	string value;
-	bool gotMethod, gotUri;
+	bool gotMethod = false, gotUri = false;
 	char digit;
 	
 	// copy given data into data stream so we can work with it
