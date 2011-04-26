@@ -109,6 +109,7 @@ HTTPresponse* HTTPrequest::execute() {
 	
 	// connect to http server
 	Socket receiver;
+	receiver.create();
 	if (!receiver.connect(host, 80)) {
 		// could not connect
 		return NULL;

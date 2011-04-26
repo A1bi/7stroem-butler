@@ -2,9 +2,8 @@
 using namespace std;
 #include "socket.h"
 
-// constructor
-Socket::Socket() {
-	
+// create a new socket with new file descriptor
+void Socket::create() {
 	sock = ::socket(AF_INET, SOCK_STREAM, 0);
 	if ( sock < 0 ) {
 		throw SockExcept("error creating socket");
@@ -12,14 +11,13 @@ Socket::Socket() {
 	int y = 1;
 	// set option the reuse address and port
 	setsockopt( sock, SOL_SOCKET, SO_REUSEADDR, &y, sizeof(int) );
-	
 }
 
 // destructor
-Socket::~Socket() {
+//Socket::~Socket() {
 	// close socket
 	//if (isValid()) ::close(sock);
-}
+//}
 
 // binds socket to address and port
 bool Socket::bind(const int port) {

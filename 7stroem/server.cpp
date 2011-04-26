@@ -9,6 +9,7 @@ void Server::start() {
 	
 	// create listening sock whick checks for new connections
 	Socket listeningSock;
+	listeningSock.create();
 	listeningSock.bind(4926);
 	listeningSock.listen();
 	// create new connection checking thread
@@ -24,7 +25,6 @@ void Server::start() {
 
 // listen for new connections, accept and pass them on to a new thread of handleNewConnection()
 void Server::listen(Socket* sock) {
-	
 	// socket for a new connection
 	Socket newConnSock;
 	
@@ -51,20 +51,13 @@ void Server::checkConnections() {
 	timeout.tv_usec = 500;
 	
 	while (true) {
-		
-		sleep(2);
+		boost::this_thread::sleep(boost::posix_time::seconds(2));
 		
 		FD_ZERO(&sockSet);
 		sockMax = -1;
 		boost::lock_guard<boost::mutex> lock(mutexConn);
 		// create a socket set which contains all open connections
 		for (vIter = openConnections.begin(); vIter != openConnections.end(); ++vIter) {
-			// first check if pointers are still valid (may have been deleted after a player was removed)
-			if ((*vIter)->gameCon == NULL || (*vIter)->player == NULL) {
-				vIter = openConnections.erase(vIter)-1;
-				continue;
-			}
-			
 			// add to socket set
 			FD_SET((*vIter)->sock, &sockSet);
 			if ((*vIter)->sock > sockMax) {
@@ -91,7 +84,10 @@ void Server::checkConnections() {
 					// remove from set
 					FD_CLR((*vIter)->sock, &sockSet);
 					// remove from request list
-					(*vIter)->gameCon->requestsWaiting.erase(find((*vIter)->gameCon->requestsWaiting.begin(), (*vIter)->gameCon->requestsWaiting.end(), *vIter));
+					{
+						boost::lock_guard<boost::mutex> lock(mutexGames);
+						(*vIter)->gameCon->requestsWaiting.erase(find((*vIter)->gameCon->requestsWaiting.begin(), (*vIter)->gameCon->requestsWaiting.end(), *vIter));
+					}
 					delete *vIter;
 					// remove from open connections list
 					vIter = openConnections.erase(vIter)-1;
@@ -115,7 +111,7 @@ void Server::checkPlayers() {
 	mGameCon::iterator mIter;
 	
 	while (true) {
-		sleep(3);
+		boost::this_thread::sleep(boost::posix_time::seconds(3));
 
 		boost::lock_guard<boost::mutex> lock(mutexGames);
 		for (mIter = games.begin(); mIter != games.end(); ) {

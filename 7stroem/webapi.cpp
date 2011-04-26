@@ -22,11 +22,13 @@ JSONobject WebAPI::makeRequest(JSONobject* jsonRequest, string action) {
 	// execute and get response
 	HTTPresponse* response = request.execute();
 	string rawResponse;
-	response->getBody(&rawResponse);
+	if (response != NULL) {
+		response->getBody(&rawResponse);
+		delete response;
+	}
 	// parse json
-	JSONobject responseJson(rawResponse);
+	JSONobject responseJson(rawResponse);		
 	
-	delete response;
 	return responseJson;
 }
 

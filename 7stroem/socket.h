@@ -21,9 +21,10 @@ class Socket {
 	
 public:
 	// constructors
-	Socket();
-	virtual ~Socket();
+	Socket() : sock(0) {}
+	//virtual ~Socket();
 	
+	void create();
 	bool bind(const int port);
 	bool listen() const;
 	bool accept(Socket&) const;
