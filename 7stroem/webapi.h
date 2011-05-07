@@ -5,23 +5,18 @@
 #include "json.h"
 using namespace std;
 
-class Game;
-class Player;
-
 class WebAPI {
 	public:
-	WebAPI(Game* const g): game(g) {}
-	void roundEnded(Player*, int);
-	void roundStarted();
-	void playerQuit(Player*);
-	void changeHost();
-	void startGame();
-	void finishGame();
+	void makeRequest(JSONobject*, string, JSONobject* = NULL);
+	static void setServerAddr(string b) {
+		serverAddr = b;
+	}
+	static void setAuthcode(string b) {
+		authcode = b;
+	}
 	
 	private:
-	Game* const game;
-	JSONobject makeRequest(JSONobject*, string);
-	static const string serverAddr, authcode;
+	static string serverAddr, authcode;
 	
 };
 

@@ -5,9 +5,8 @@
 #include <vector>
 using namespace std;
 #include "card.h"
+#include "gameapi.h"
 #include "player.h"
-#include "webapi.h"
-
 
 struct Action {
 	const string action;
@@ -78,7 +77,7 @@ class Game {
 	vector<Card*> allCards;
 	int turns, knocks, cardsLaid;
 	bool started, roundStarted, finished, someonePoor, blindKnocked;
-	WebAPI wAPI;
+	GameAPI wAPI;
 	
 	void start();
 	Player* getPlayer(int playerId);

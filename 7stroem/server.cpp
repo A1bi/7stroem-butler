@@ -2,15 +2,18 @@
 
 #include <iostream>
 
-const string Server::authcode = "zGLqz2QM5RGQkwld";
-
 // starts game server
-void Server::start() {
+void Server::start(const int port) {
+	// register this butler with web server on startup
+	if (!registerWithServer()) {
+		cout << "could not register with webserver" << endl;
+		exit(1);
+	}
 	
 	// create listening sock whick checks for new connections
 	Socket listeningSock;
 	listeningSock.create();
-	listeningSock.bind(4926);
+	listeningSock.bind(port);
 	listeningSock.listen();
 	// create new connection checking thread
 	boost::thread listening(boost::bind(&Server::listen, this, &listeningSock));
@@ -422,6 +425,17 @@ bool Server::createGame(int gameId, int host) {
 	boost::lock_guard<boost::mutex> lock(mutexGames);
 	if (games.find(gameId) == games.end()) {
 		games[gameId] = new GameContainer(gameId, host);
+		return true;
+	}
+	return false;
+}
+
+// register this server with the webserver and retrieve the authcode the webserver will later use to authenticate with this server
+bool Server::registerWithServer() {
+	JSONobject json, response;
+	wAPI.makeRequest(&json, "registerServer", &response);
+	if (response.getChild("result") == "ok") {
+		authcode = response.getChild("authcode");
 		return true;
 	}
 	return false;

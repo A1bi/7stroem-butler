@@ -9,6 +9,7 @@
 #include "game.h"
 #include "httprequest.h"
 #include "json.h"
+#include "webapi.h"
 using namespace std;
 
 struct GameContainer;
@@ -35,14 +36,16 @@ struct GameContainer {
 
 class Server {
 public:
-	void start();
+	Server() : authcode("zGLqz2QM5RGQkwld") {}
+	void start(const int);
 	
 private:
 	typedef map<int, GameContainer*> mGameCon;
 	typedef vector<PlayerRequest*> vPRequest;
 	mGameCon games;
 	vPRequest openConnections;
-	static const string authcode;
+	string authcode;
+	WebAPI wAPI;
 	
 	void checkConnections();
 	void checkPlayers();
@@ -55,6 +58,7 @@ private:
 	void sendResponse(Socket* sock, JSONobject* response, bool);
 	void sendError(Socket*, bool, string, string = "");
 	bool createGame(int, int);
+	bool registerWithServer();
 	
 	// mutexes
 	boost::mutex mutexConn, mutexGames;

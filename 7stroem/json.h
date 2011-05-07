@@ -20,8 +20,9 @@ protected:
 class JSONobject : public JSON {
 public:
 	JSONobject() {};
-	JSONobject(string);
+	JSONobject(const string);
 	~JSONobject();
+	void parse(const string);
 	void addChild(string, string);
 	JSONarray* addArray(string, string = "");
 	JSONobject* addObject(string, string = "");

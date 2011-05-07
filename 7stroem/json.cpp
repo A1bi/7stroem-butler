@@ -13,6 +13,9 @@ string JSON::getTabs(int depth) {
 // -- JSONobject --
 // parser
 JSONobject::JSONobject(const string rawObject) {
+	parse(rawObject);
+}
+void JSONobject::parse(const string rawObject) {
 	if (rawObject == "") return;
 	
 	const boost::regex pattern("\"(.+?)\": *((\"(.+?)\")|(\\{(.+?)\\})|(\\[(.+?)\\]))");
