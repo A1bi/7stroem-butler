@@ -1,17 +1,20 @@
+#include <sstream>
+#include <boost/bind.hpp>
+
 #include "gameapi.h"
 #include "game.h"
-#include <sstream>
 
-void GameAPI::makeGameRequest(JSONobject* jsonRequest, string action, JSONobject* response) {
+
+void GameAPI::makeGameRequest(JSONobject* jsonRequest, string action, boost::function<void()> finishHandler) {
 	// add game id to request
 	stringstream value;
 	value << game->getId();
 	jsonRequest->addChild("game", value.str());
 	
-	makeRequest(jsonRequest, action, response);
+	makeRequest(jsonRequest, action, finishHandler);
 }
 
-void GameAPI::roundEnded(Player* winner, int players) {
+void GameAPI::roundEnded(PlayerPtr winner, int players) {
 	
 	// prepare json
 	JSONobject json;
@@ -30,18 +33,20 @@ void GameAPI::roundStarted() {
 	// prepare json
 	JSONobject json;
 	// send to server and receive response
-	JSONobject responseJson;
-	makeGameRequest(&json, "roundStarted", &responseJson);
+	//JSONobject responseJson;
+	makeGameRequest(&json, "roundStarted");
 	
+	/*
 	// check if any players have to be kicked because they have not enough money left
 	int i = 0;
 	string tmp;
 	if (responseJson.getArray("kick") != NULL &&responseJson.getArray("kick")->getChild(i++, &tmp)) {
 		//pla
 	}
+	*/
 }
 
-void GameAPI::playerQuit(Player* player) {
+void GameAPI::playerQuit(PlayerPtr player) {
 	// for type casting
 	stringstream value;
 	
@@ -72,7 +77,7 @@ void GameAPI::finishGame() {
 	JSONobject json;
 	
 	// send to server and receive response
-	makeGameRequest(&json, "finishGame");
+	makeGameRequest(&json, "finishGame", boost::bind(&Game::kill, game));
 }
 
 void GameAPI::startGame() {

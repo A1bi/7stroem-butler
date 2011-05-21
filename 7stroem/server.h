@@ -1,67 +1,65 @@
 // server.h
 #ifndef _SERVER_H_
 #define _SERVER_H_
+
+#include <iostream>
 #include <string>
-#include <vector>
-#include <map>
-#include "boost/thread/thread.hpp"
-#include "socket.h"
+#include <boost/asio.hpp>
+#include <boost/bind.hpp>
+#include <boost/enable_shared_from_this.hpp>
+using namespace std;
+
+#include "types.h"
 #include "game.h"
 #include "httprequest.h"
 #include "json.h"
 #include "webapi.h"
-using namespace std;
+#include "connection.h"
 
-struct GameContainer;
+typedef map<int, GamePtr> mGame;
 
-struct PlayerRequest {
-	const int since, sock;
-	bool jsonp;
-	GameContainer* const gameCon;
-	Player* const player;
-	PlayerRequest(GameContainer* g, Player* p, int si, int so, bool j): gameCon(g), player(p), since(si), sock(so), jsonp(j) {}
-};
-
-struct GameContainer {
-	Game* const game;
-	vector<PlayerRequest*> requestsWaiting;
-	//boost::mutex mutex;
-	
-	GameContainer(int id, int host): game(new Game(id, host)) {}
-	~GameContainer() {
-		delete game;
-	}
-	
+struct PlayerRequest : public boost::enable_shared_from_this<PlayerRequest> {
+	int since, time;
+	GamePtr const game;
+	PlayerPtr const player;
+	PlayerRequest(GamePtr g, PlayerPtr p, int si, int t, connectionPtr c): game(g), player(p), since(si), time(t) {}
 };
 
 class Server {
 public:
-	Server() : authcode("zGLqz2QM5RGQkwld") {}
-	void start(const int);
+	Server(const int port) :
+		authcode("zGLqz2QM5RGQkwld"), acceptor(ioService,
+		boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)),
+		newConn(new Connection(ioService, this)) {
+			WebAPI::setIOservice(&ioService);
+	}
+	void start();
+	void handleNewRequest(connectionPtr);
+	void removeConn(connectionPtr);
+	void removeGame(int);
+	void sendToWaiting(GamePtr gameCon);
+	boost::asio::io_service* getIO() {
+		return &ioService;
+	}
 	
 private:
-	typedef map<int, GameContainer*> mGameCon;
-	typedef vector<PlayerRequest*> vPRequest;
-	mGameCon games;
-	vPRequest openConnections;
+	
+	mGame games;
 	string authcode;
 	WebAPI wAPI;
-	
-	void checkConnections();
-	void checkPlayers();
-	void listen(Socket*);
-	void handleNewConnection(int);
-	void handlePlayerRequest(HTTPrequest*, Socket*);
-	bool handleServerRequest(HTTPrequest*);
-	bool sendActions(PlayerRequest*);
-	void sendToWaiting(GameContainer* gameCon);
-	void sendResponse(Socket* sock, JSONobject* response, bool);
-	void sendError(Socket*, bool, string, string = "");
+	connectionSet connections;
+    boost::asio::io_service ioService;
+	boost::asio::ip::tcp::acceptor acceptor;
+	connectionPtr newConn;
+    
+	void listen();
+    void handleAccept();
+	void handlePlayerRequest(connectionPtr);
+	bool handleServerRequest(connectionPtr);
+	bool sendActions(connectionPtr);
+	void sendError(connectionPtr, string, string = "");
 	bool createGame(int, int);
 	bool registerWithServer();
-	
-	// mutexes
-	boost::mutex mutexConn, mutexGames;
 	
 };
 

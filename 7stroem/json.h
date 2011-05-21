@@ -24,6 +24,7 @@ public:
 	~JSONobject();
 	void parse(const string);
 	void addChild(string, string);
+	void addChild(string, int);
 	JSONarray* addArray(string, string = "");
 	JSONobject* addObject(string, string = "");
 	string str(int = 0);

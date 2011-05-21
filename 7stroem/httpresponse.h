@@ -11,11 +11,13 @@ using namespace std;
 // class for response objects
 class HTTPresponse : public HTTP {
 public:
-	HTTPresponse() : status(200) {};
+	HTTPresponse() : status(200) {
+		setHeaderValue("Connection", "close");
+	}
 	HTTPresponse(stringstream&);
 	void setStatus(int);
 	int getStatus();
-	bool send(Socket*);
+	string getAll();
 	void operator << (string);
 	void getBody(string* const);
 	

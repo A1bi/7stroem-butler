@@ -1,13 +1,16 @@
-#include <vector>
+#include <iostream>
+#include <boost/bind.hpp>
 using namespace std;
+
 #include "player.h"
 #include "game.h"
 
+
 // constructor
-Player::Player(int i, string a, Game* g): PlayerId(i), authcode(a), game(g) {
+Player::Player(int i, string a, Game* g, boost::asio::io_service* io): PlayerId(i), authcode(a), game(g), timerDisconnect(*io) {
 	connected = 1;
+	quitted = false;
 	setDisconnected();
-	lastSeen += 10;
 }
 
 // returns player id
@@ -158,6 +161,8 @@ int Player::getStrikes() {
 
 // mark player as connected
 void Player::setConnected() {
+	// cancel timer
+	timerDisconnect.cancel();
 	// increase count of clients that are connected
 	connected++;
 }
@@ -165,19 +170,20 @@ void Player::setConnected() {
 // mark player as disconnected and note the time of his disconnection
 void Player::setDisconnected() {
 	// decrease count of clients that are connected
-	connected--;
-	lastSeen = time(NULL);
+	if (--connected < 1) {
+		// player is not connected anymore
+		// he has now 15 seconds to reconnect or this timer will remove him from the game
+		timerDisconnect.expires_from_now(boost::posix_time::seconds(5));
+		timerDisconnect.async_wait(boost::bind(&Player::quit, this, boost::asio::placeholders::error));
+	}
 }
 
-// just return connection state
-bool Player::isConnected() {
-	return (connected > 0);
-}
-
-// check if player is missing
-bool Player::isMissing() {
-	// the last connection to the server of any client was more than 5 seconds ago
-	return (connected < 1 && lastSeen + 3 <= time(NULL));
+void Player::quit(const boost::system::error_code& error) {
+	if (error) return;
+	
+	std::cout << "player disconnected" << std::endl;
+	quitted = true;
+	game->removePlayer(PlayerId);
 }
 
 // get cards in player's hand as string separated by a comma

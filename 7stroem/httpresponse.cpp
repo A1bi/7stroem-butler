@@ -44,13 +44,9 @@ HTTPresponse::HTTPresponse(stringstream& data) {
 	parseHeader(data);
 }
 
-bool HTTPresponse::send(Socket* client) {
-	// generate header to send to server
-	string header = generateHeader();
-
-	// send header and body
-	return client->send(header + body);
-	
+// just return the whole http response
+string HTTPresponse::getAll() {
+	return generateHeader() + body;
 }
 
 // copies the body into the given pointer

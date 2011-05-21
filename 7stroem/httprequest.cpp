@@ -1,17 +1,16 @@
 #include <sstream>
 #include <stdlib.h>
-#include "http.h"
+#include <boost/asio.hpp>
+#include <boost/bind.hpp>
+
 #include "httprequest.h"
 
 // parses HTTP request
-HTTPrequest::HTTPrequest(string* d) {
-	stringstream data, tmpUri;
+HTTPrequest::HTTPrequest(stringstream& data) {
+	stringstream tmpUri;
 	string value;
 	bool gotMethod = false, gotUri = false;
 	char digit;
-	
-	// copy given data into data stream so we can work with it
-	data << *d;
 	
 	// go through all digits of this line but quit after first line because we only need the first here
 	while (data.get(digit) && digit != '\n') {
@@ -103,17 +102,8 @@ string HTTPrequest::generateHeader() {
 	return r.str();
 }
 
-HTTPresponse* HTTPrequest::execute() {
-	// already executed
-	//if (executed) return false;
-	
-	// connect to http server
-	Socket receiver;
-	receiver.create();
-	if (!receiver.connect(host, 80)) {
-		// could not connect
-		return NULL;
-	}
+// just return whole request
+string HTTPrequest::getAll() {
 	
 	// generate header to send to server
 	string request = generateHeader();
@@ -121,8 +111,10 @@ HTTPresponse* HTTPrequest::execute() {
 	// add body and replace last & with final break
 	request += body;
 	request.replace(request.size()-1, 1, "\n");
+	
+	return request;
 
-	// send header and body
+	/*// send header and body
 	receiver.send(request);
 	
 	// get response
@@ -210,7 +202,7 @@ HTTPresponse* HTTPrequest::execute() {
 	receiver.close();
 	
 	return response;
-	
+	*/
 }
 
 void HTTPrequest::setGet(string key, string value) {

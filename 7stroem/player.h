@@ -1,17 +1,24 @@
 // player.h
 #ifndef _PLAYER_H_
 #define _PLAYER_H_
+
 #include <string>
 #include <set>
+#include <boost/asio.hpp>
 using namespace std;
+
 #include "card.h"
+
 
 class Game;
 
 class Player {
 	public:
 	// constructor: set id of user and the code required to authenticate a user
-	Player(int, string, Game*);
+	Player(int, string, Game*, boost::asio::io_service*);
+	~Player() {
+		timerDisconnect.cancel();
+	}
 	bool authenticate(int pid, string authcode);
 	void giveCard(Card *givenCard);
 	bool layStack(Card *hCard);
@@ -29,13 +36,17 @@ class Player {
 	int getStrikes();
 	void setConnected();
 	void setDisconnected();
-	bool isConnected();
-	bool isMissing();
 	void newRound();
 	void newSmallRound();
 	void getHand(string[4]);
 	void flipHand();
 	int cardsOnStack();
+	bool hasFolded() {
+		return folded;
+	}
+	bool hasQuit() {
+		return quitted;
+	}
 	
 	private:
 	const int PlayerId;
@@ -44,14 +55,16 @@ class Player {
 	typedef set<Card*> sCard;
 	sCard hand;
 	vector<Card*> stack;
-	bool folded;
+	// use quitted instead of quit because otherwise it would conflict with the function quit()
+	bool folded, quitted;
 	bool flipped;
 	bool knockPossible;
 	int strikes;
 	int calls;
 	int connected;
-	int lastSeen;
+	boost::asio::deadline_timer timerDisconnect;
 	
+	void quit(const boost::system::error_code&);
 	void incStrikes(int newStrikes);
 
 };

@@ -1,18 +1,24 @@
 // game.h
 #ifndef _GAME_H_
 #define _GAME_H_
+
 #include <string>
 #include <vector>
+#include <boost/enable_shared_from_this.hpp>
 using namespace std;
+
+#include "types.h"
 #include "card.h"
 #include "gameapi.h"
 #include "player.h"
+
+class Server;
 
 struct Action {
 	const string action;
 	const int player;
 	const string content;
-	Action(string nAction, Player* aPlayer, string nContent): action(nAction), player((aPlayer == NULL) ? 0 : aPlayer->getId()), content(nContent) {}
+	Action(string nAction, PlayerPtr aPlayer, string nContent): action(nAction), player((aPlayer == PlayerPtr()) ? 0 : aPlayer->getId()), content(nContent) {}
 };
 
 class ActionExcept {
@@ -32,33 +38,35 @@ private:
 
 struct pPlayer {
 	int first;
-	Player* second;
-	pPlayer(int i, Player* p) : first(i), second(p) {}
+	PlayerPtr second;
+	pPlayer(int i, PlayerPtr p) : first(i), second(p) {}
 	bool operator == (int i) {
 		return (i == first);
 	}
 };
 
-class Game {
+class Game : public boost::enable_shared_from_this<Game> {
 	
-	typedef vector<Player*> vPlayer;
+	typedef vector<PlayerPtr> vPlayer;
 	typedef vector<pPlayer> vpPlayer;
 	
 	public:
+	connectionSet requestsWaiting;
+	
 	// constructor: set id and create card deck
-	Game(int, int);
+	Game(int, int, Server*);
 	~Game();
-	Player* addPlayer(int playerId, string authcode);
-	bool removePlayer(vpPlayer::iterator);
-	Player* authenticate(int playerId, string authcode);
+	bool addPlayer(int playerId, string authcode);
+	void removePlayer(int);
+	PlayerPtr authenticate(int playerId, string authcode);
 	void getActionsSince(pair<vector<Action*>, int>*);
-	bool registerAction(Player*, string action, string content);
-	bool registerHostAction(Player*, string);
-	int checkPlayers();
+	bool registerAction(PlayerPtr, string action, string content);
+	bool registerHostAction(PlayerPtr, string);
 	int getId();
 	int getHost() {
 		return host;
 	}
+	void kill();
 	
 	private:
 	// contains id of game
@@ -70,19 +78,20 @@ class Game {
 	int origPlayers;
 	// whose turn is it, who did win last ?
 	vPlayer::iterator turn, knockTurn;
-	Player* lastWinner;
+	PlayerPtr lastWinner;
 	// actions list
 	vector<Action*> actions;
 	// array containing the whole card deck
 	vector<Card*> allCards;
-	int turns, knocks, cardsLaid;
+	int rounds, turns, knocks, cardsLaid;
 	bool started, roundStarted, finished, someonePoor, blindKnocked;
 	GameAPI wAPI;
+	Server* server;
 	
 	void start();
-	Player* getPlayer(int playerId);
-	void notifyAction(string action, Player *aPlayer = NULL, string content = "");
-	void notifyAction(string action, Player *aPlayer, int content);
+	PlayerPtr getPlayer(int playerId);
+	void notifyAction(string action, PlayerPtr aPlayer = PlayerPtr(), string content = "");
+	void notifyAction(string action, PlayerPtr aPlayer, int content);
 	void notifyTurn(bool = false);
 	void giveCards();
 	void nextTurn();
@@ -91,9 +100,10 @@ class Game {
 	void startSmallRound();
 	void endSmallRound();
 	void endRound();
-	void knock(Player*, int);
-	bool removePlayerFromList(vPlayer&, Player*, vPlayer::iterator* = NULL);
-	void removeFromKnock(Player* = NULL);
+	void knock(PlayerPtr, int);
+	bool removePlayerFromList(vPlayer&, PlayerPtr, vPlayer::iterator* = NULL);
+	void removeFromKnock(PlayerPtr = PlayerPtr());
+	void killQuitPlayers(vpPlayer::iterator* = NULL);
 	
 };
 

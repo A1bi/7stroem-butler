@@ -1,11 +1,13 @@
 #include <sstream>
-#include <map>
-using namespace std;
-#include "game.h"
 #include <iostream>
+using namespace std;
+
+#include "game.h"
+#include "server.h"
+
 
 // constructor
-Game::Game(int i, int h): gameId(i), host(h), wAPI(this) {
+Game::Game(int i, int h, Server* s): gameId(i), host(h), wAPI(this), server(s) {
 	// suits and numbers
 	char suits[4] = { 'd', 's', 'h', 'c' };
 	int numbers[8] = { 3, 4, 5, 6, 7, 8, 9, 10 };
@@ -19,6 +21,7 @@ Game::Game(int i, int h): gameId(i), host(h), wAPI(this) {
 	roundStarted = false;
 	started = false;
 	finished = false;
+	rounds = 0;
 }
 
 // destructor
@@ -54,9 +57,15 @@ void Game::start() {
 	}
 	
 	// notify players
-	notifyAction("started", NULL, pIds.str());
+	notifyAction("started", PlayerPtr(), pIds.str());
+	
 	// start first round
 	startRound();
+}
+
+// destroy the game
+void Game::kill() {
+	server->removeGame(gameId);
 }
 
 // start a round
@@ -66,8 +75,11 @@ void Game::startRound() {
 		pIter->second->newRound();
 		playersRound.push_back(pIter->second);
 	}
-	// initial turn
-	turn = playersRound.end()-1;
+	// first round -> first player is next
+	if (++rounds < 2) {
+		turn = playersRound.end()-1;
+	}
+	
 	// set knock turn to a dummy value to prevent errors later
 	knockTurn = playersRound.begin();
 	roundStarted = true;
@@ -83,7 +95,7 @@ void Game::startRound() {
 void Game::endRound() {
 	roundStarted = false;
 	// the only player left in round is the winner
-	Player* winner = playersRound.front();
+	PlayerPtr winner = playersRound.front();
 	// web server
 	wAPI.roundEnded(winner, origPlayers);
 	notifyAction("roundEnded", winner);
@@ -95,7 +107,7 @@ void Game::endRound() {
 void Game::startSmallRound() {
 	// add all players in this round to playersSmallRound
 	someonePoor = false;
-	Player* oldTurn = *turn;
+	PlayerPtr oldTurn = *turn;
 	for (vPlayer::iterator pIter = playersRound.begin(); pIter != playersRound.end(); ++pIter) {
 		(*pIter)->newSmallRound();
 		// player is poor ?
@@ -163,35 +175,39 @@ void Game::endSmallRound() {
 }
 
 // adds player to players list
-Player* Game::addPlayer(int playerId, string authcode) {
+bool Game::addPlayer(int playerId, string authcode) {
 	// check if player not yet added
 	if (getPlayer(playerId) != NULL) {
-		return NULL;
+		return false;
 	}
 	// create pointer to new Player object
-	Player *newPlayer = new Player(playerId, authcode, this);
+	PlayerPtr newPlayer = PlayerPtr(new Player(playerId, authcode, this, server->getIO()));
 	// insert into vector
 	players.push_back(pPlayer(playerId, newPlayer));
 	// register as action
 	notifyAction("playerJoined", newPlayer);
 	
-	return newPlayer;
+	return true;
 }
 
 // removes player from game
-bool Game::removePlayer(vpPlayer::iterator pIter) {
-	Player* player = pIter->second;
-	// remove from list
-	players.erase(pIter);
+void Game::removePlayer(int id) {
+	// get player
+	vpPlayer::iterator pIter = find(players.begin(), players.end(), id);
+	if (pIter == players.end()) return;
 	
-	bool destroyGame = false;
+	PlayerPtr player = pIter->second;
+	players.erase(pIter);
 	int newPlayerCount = players.size();
+	
+	wAPI.playerQuit(player);
+	notifyAction("playerQuit", player);
 	
 	if (started && !finished) {
 		// whole game has only one player left
 		if (newPlayerCount < 2) {
 			cout << "spiel beendet" << endl;
-			Player* lastPlayer = players.front().second;
+			PlayerPtr lastPlayer = players.front().second;
 			if (roundStarted) {
 				// notify web server
 				wAPI.roundEnded(lastPlayer, origPlayers);
@@ -215,21 +231,15 @@ bool Game::removePlayer(vpPlayer::iterator pIter) {
 			if (!activeKnock.empty()) {
 				if (*knockTurn == player) {
 					newTurn = true;
+					knockTurn++;
 					removeFromKnock();
 				} else {
 					removeFromKnock(player);
 				}
 			}
 			// remove from from round and small round
-			removePlayerFromList(playersRound, player, &turn);
+			removePlayerFromList(playersRound, player);
 			removePlayerFromList(playersSmallRound, player, &turn);
-			if (lastWinner == player) {
-				if (turn == playersSmallRound.end()) {
-					lastWinner = playersSmallRound.front();
-				} else {
-					lastWinner = *turn;
-				}
-			}
 			
 			// round has one player left
 			if (playersRound.size() < 2) {
@@ -250,22 +260,23 @@ bool Game::removePlayer(vpPlayer::iterator pIter) {
 	if (newPlayerCount < 1) {
 		cout << "spiel zerstört" << endl;
 		wAPI.finishGame();
-		destroyGame = true;
-	// check if host has to be changed
-	} else if (newPlayerCount > 0 && host == player->getId() && !finished) {
-		pPlayer* newHost = &(players.front());
-		host = newHost->first;
-		notifyAction("hostChanged", newHost->second);
-		wAPI.changeHost();
+		//end();
+	
+	} else {
+		// check if host has to be changed
+		if (newPlayerCount > 0 && host == player->getId() && !finished) {
+			pPlayer* newHost = &(players.front());
+			host = newHost->first;
+			notifyAction("hostChanged", newHost->second);
+			wAPI.changeHost();
+		}
+		server->sendToWaiting(shared_from_this());
 	}
 	
-	delete player;
-	// returns true if the game has to be destroyed
-	return destroyGame;
 }
 
 // host did something
-bool Game::registerHostAction(Player* tPlayer, string action) {
+bool Game::registerHostAction(PlayerPtr tPlayer, string action) {
 	if (host != tPlayer->getId()) throw ActionExcept("you are not the host of this game");
 	if (roundStarted) {
 		throw ActionExcept("round has already started");
@@ -286,7 +297,7 @@ bool Game::registerHostAction(Player* tPlayer, string action) {
 }
 
 // register an action
-bool Game::registerAction(Player* tPlayer, string action, string content) {
+bool Game::registerAction(PlayerPtr tPlayer, string action, string content) {
 	
 	// chat
 	if (action == "chat") {
@@ -345,11 +356,11 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 				endSmallRound();
 				
 			} else {
-				notifyTurn();
-				// last winner is now the player who has opened this knock
-				if (lastWinner == tPlayer) {
-					lastWinner = *turn;
+				// check if he has already laid a card
+				if (tPlayer->cardsOnStack() >= turns) {
+					cardsLaid--;
 				}
+				notifyTurn();
 			}
 			
 			return true;
@@ -384,14 +395,22 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 				cardsLaid = 0;
 				// check who won
 				vPlayer::iterator pIter;
-				// check if suit is equal to last winner and also number is higher
 				for (pIter = playersSmallRound.begin(); pIter != playersSmallRound.end(); ++pIter) {
 					if (*pIter == lastWinner) continue;
-					if ((*(*pIter)->lastStack()) > (*lastWinner->lastStack())) {
+					// now two things have to be done to determine the winner of this small round
+					// first: check if last winner has folded (rare case) -> player only has to have the correct suit
+					// second: check if suit is equal to last winner and also number is higher
+					if (((lastWinner->hasFolded() || lastWinner->hasQuit()) && !lastWinner->lastStack()->cmpSuitTo(lCard)) || 
+						(*(*pIter)->lastStack()) > (*lastWinner->lastStack())) {
 						lastWinner = *pIter;
 						// it's now the player's turn who has won
 						turn = pIter;
 					}
+				}
+				// if the last winner is still the player who folded just choose the next player clockwise as winner
+				if (lastWinner->hasFolded()) {
+					// since turn is now the player next the player who folded we can set him as last winner
+					lastWinner = *turn;
 				}
 				// last turn of small round
 				if (turns == 4) {
@@ -471,13 +490,13 @@ bool Game::registerAction(Player* tPlayer, string action, string content) {
 }
 
 // notify a players or queue action for next request
-void Game::notifyAction(string action, Player *aPlayer, string content) {
+void Game::notifyAction(string action, PlayerPtr aPlayer, string content) {
 	Action *newAction = new Action(action, aPlayer, content);
 	// queue action
 	actions.push_back(newAction);
 }
 // same for integer content
-void Game::notifyAction(string action, Player *aPlayer, int content) {
+void Game::notifyAction(string action, PlayerPtr aPlayer, int content) {
 	// int to string
 	stringstream intContent;
 	intContent << content;
@@ -522,12 +541,12 @@ void Game::getActionsSince(pair<vector<Action*>, int>* pActions) {
 }
 
 // authenticate player
-Player* Game::authenticate(int playerId, string authcode) {
+PlayerPtr Game::authenticate(int playerId, string authcode) {
 	// get Player object
-	Player* wantedPlayer = getPlayer(playerId);
+	PlayerPtr wantedPlayer = getPlayer(playerId);
 
 	// authentication succeeded ?
-	if (wantedPlayer != NULL && wantedPlayer->authenticate(playerId, authcode)) {
+	if (wantedPlayer != NULL && wantedPlayer->authenticate(playerId, authcode) && !wantedPlayer->hasQuit()) {
 		return wantedPlayer;
 	}
 	return wantedPlayer;
@@ -560,12 +579,12 @@ void Game::nextTurn() {
 }
 
 /*// sets the turn to the given player
-void Game::setTurn(Player *tPlayer) {
+void Game::setTurn(PlayerPtr tPlayer) {
 	turn = find(playersSmallRound.begin(), playersSmallRound.end(), tPlayer);
 }*/
 
 // returns reference to Player object for given id
-Player* Game::getPlayer(int playerId) {
+PlayerPtr Game::getPlayer(int playerId) {
 	// check if there is a player with this id and authentication succeeded
 	vpPlayer::iterator pIter = find(players.begin(), players.end(), playerId);
 	if (pIter != players.end()) {
@@ -573,37 +592,11 @@ Player* Game::getPlayer(int playerId) {
 		return pIter->second;
 	}
 	// not found
-	return NULL;
-}
-
-// check all players if they are still connected
-int Game::checkPlayers() {
-	bool action = false;
-	for (vpPlayer::iterator pIter = players.begin(); pIter != players.end(); pIter++) {
-		Player* player = pIter->second;
-		if (player->isConnected()) continue;
-		
-		if (player->isMissing()) {
-			// notify web server and database
-			wAPI.playerQuit(player);
-			notifyAction("playerQuit", player);
-			
-			if (removePlayer(pIter)) {
-				// game has to be removed from game list in server.cpp
-				return 2;
-			} else {
-				action = true;
-			}
-			pIter--;
-
-		}
-		
-	}
-	return action;
+	return PlayerPtr();
 }
 
 // open an active knock
-void Game::knock(Player* player, int k) {
+void Game::knock(PlayerPtr player, int k) {
 	// copy all players to knock
 	activeKnock = playersSmallRound;
 	// find position of the one who knocked
@@ -614,7 +607,7 @@ void Game::knock(Player* player, int k) {
 }
 
 // remove player from vector
-bool Game::removePlayerFromList(vPlayer &oPlayers, Player *delPlayer, vPlayer::iterator* pTurn) {
+bool Game::removePlayerFromList(vPlayer &oPlayers, PlayerPtr delPlayer, vPlayer::iterator* pTurn) {
 	vPlayer::iterator dPlayer = find(oPlayers.begin(), oPlayers.end(), delPlayer);
 	if (dPlayer != oPlayers.end()) {
 		dPlayer = oPlayers.erase(dPlayer);
@@ -628,8 +621,8 @@ bool Game::removePlayerFromList(vPlayer &oPlayers, Player *delPlayer, vPlayer::i
 }
 
 // remove player from active knock
-void Game::removeFromKnock(Player* player) {
-	if (player != NULL) {
+void Game::removeFromKnock(PlayerPtr player) {
+	if (player != PlayerPtr()) {
 		removePlayerFromList(activeKnock, player, &knockTurn);
 		knockTurn++;
 	} else {
@@ -638,5 +631,18 @@ void Game::removeFromKnock(Player* player) {
 	// by erasing him we also updated knockTurn so now we have to check if it is still correct
 	if (knockTurn == activeKnock.end()) {
 		knockTurn = activeKnock.begin();
+	}
+}
+
+// destroys all players who have quit after each round
+void Game::killQuitPlayers(vpPlayer::iterator* pIter) {
+	if (pIter != NULL) {
+		players.erase(*pIter);
+	} else {
+		for (vpPlayer::iterator pIter = players.begin(); pIter != players.end(); pIter++) {
+			if (pIter->second->hasQuit()) {
+				pIter = players.erase(pIter)-1;
+			}
+		}
 	}
 }

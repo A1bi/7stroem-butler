@@ -11,9 +11,9 @@ using namespace std;
 // class for request objects
 class HTTPrequest : public HTTP {
 public:
-	HTTPrequest(string*);
+	HTTPrequest(stringstream&);
 	HTTPrequest(const string, const string);
-	HTTPresponse* execute();
+	string getAll();
 	string getGet(string);
 	void setGet(string, string);
 	void setPost(string, string);

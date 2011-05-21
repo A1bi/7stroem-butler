@@ -41,8 +41,8 @@ int main (int argc, char * const argv[]) {
     }
 	
 	// initiate server
-	Server server;
-	server.start(port);
+	Server server(port);
+	server.start();
 	
     return 0;
 }

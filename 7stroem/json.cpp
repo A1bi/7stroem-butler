@@ -1,3 +1,5 @@
+#include <boost/lexical_cast.hpp>
+
 #include "json.h"
 
 // -- JSON base class --
@@ -34,12 +36,19 @@ void JSONobject::parse(const string rawObject) {
 	}
 }
 
-// add child
+// add child (string)
 void JSONobject::addChild(string key, string value) {
 	// create child
 	JSONchild* child = newChild(key);
 	// assign string to value
 	child->value = value;
+}
+// add child (int)
+void JSONobject::addChild(string key, int value) {
+	// create child
+	JSONchild* child = newChild(key);
+	// assign string to value
+	child->value = boost::lexical_cast<string>(value);
 }
 
 // add array
