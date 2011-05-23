@@ -121,7 +121,7 @@ bool Player::knock(const int knocks) {
 bool Player::blindKnock(const int knocks) {
 	// check if not already flipped
 	if (!flipped) {
-		knock(knocks);
+		knock(knocks-1);
 		return true;
 	}
 	throw ActionExcept("you have already seen your cards");

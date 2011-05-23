@@ -378,10 +378,18 @@ bool Game::registerAction(PlayerPtr tPlayer, string action, string content) {
 			return false;
 		}
 		
-		// check if player laid a suit different to the leading although he has the correct suit in hand -> not permitted
-		if (tPlayer != lastWinner && !lastWinner->lastStack()->cmpSuitTo(lCard) && tPlayer->checkForSuit(lastWinner->lastStack())) {
-			throw ActionExcept("you have to admit", "admit");
-			return false;
+		if (tPlayer != lastWinner) {
+			// to make sure last winner has not left or folded before laying a card
+			if (cardsLaid < 1) {
+				// okay last winner is gone and there is also no card we can compare to
+				// -> declare this player as last winner
+				lastWinner = tPlayer;
+				
+				// check if player laid a suit different to the leading although he has the correct suit in hand -> not permitted
+			} else if (!lastWinner->lastStack()->cmpSuitTo(lCard) && tPlayer->checkForSuit(lastWinner->lastStack())) {
+				throw ActionExcept("you have to admit", "admit");
+				return false;
+			}
 		}
 		
 		// try to lay the card on stack
