@@ -79,7 +79,6 @@ void Connection::timeout(const boost::system::error_code& error) {
 	
 	// prepare a json with just a "timeout" as a result
 	// "timeout" tells the client to reconnect
-	cout << "timeout" << endl;
 	boost::shared_ptr<JSONobject> response(new JSONobject);
 	response->addChild("result", "timeout");
 	

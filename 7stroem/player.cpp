@@ -173,7 +173,7 @@ void Player::setDisconnected() {
 	if (--connected < 1) {
 		// player is not connected anymore
 		// he has now 15 seconds to reconnect or this timer will remove him from the game
-		timerDisconnect.expires_from_now(boost::posix_time::seconds(5));
+		timerDisconnect.expires_from_now(boost::posix_time::seconds(15));
 		timerDisconnect.async_wait(boost::bind(&Player::quit, this, boost::asio::placeholders::error));
 	}
 }

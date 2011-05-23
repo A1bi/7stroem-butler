@@ -7,7 +7,7 @@ using namespace std;
 
 
 // constructor
-Game::Game(int i, int h, Server* s): gameId(i), host(h), wAPI(this), server(s) {
+Game::Game(int i, int h, Server* s): gameId(i), host(h), wAPI(this), server(s), lastNotified(0) {
 	// suits and numbers
 	char suits[4] = { 'd', 's', 'h', 'c' };
 	int numbers[8] = { 3, 4, 5, 6, 7, 8, 9, 10 };
@@ -520,20 +520,17 @@ void Game::notifyTurn(bool knock) {
 void Game::getActionsSince(pair<vector<Action*>, int>* pActions) {
 	int i = 0, start = pActions->second;
 	
-	if (start >= 0) {
-		// check if the start is higher than possible
-		if (start > actions.size()) {
-			start = actions.size();
-			return;
-		}
+	if (start < 0) {
+		start = lastNotified;
+	} else if (start > actions.size()) {
+		return;
+	} 
 		
-		// copy all the actions in the specific range into the new var
-		vector<Action*>::iterator aIter;
-		for (aIter = actions.begin()+start; aIter != actions.end(); ++aIter) {
-			pActions->first.push_back(actions[start+i]);
-			i++;
-		}
-		
+	// copy all the actions in the specific range into the new var
+	vector<Action*>::iterator aIter;
+	for (aIter = actions.begin()+start; aIter != actions.end(); ++aIter) {
+		pActions->first.push_back(actions[start+i]);
+		i++;
 	}
 	
 	// update start in pair
@@ -645,4 +642,10 @@ void Game::killQuitPlayers(vpPlayer::iterator* pIter) {
 			}
 		}
 	}
+}
+
+// update lastNotified to the id of the last action and clear waiting list
+void Game::finishNotification() {
+	requestsWaiting.clear();	
+	lastNotified = actions.size();
 }

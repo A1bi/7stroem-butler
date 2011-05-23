@@ -97,12 +97,12 @@ void Server::handlePlayerRequest(connectionPtr conn) {
 				// get since argument and check if not empty
 				int since = atoi(request->getGet("since").c_str());
 				// create request object
-				PlayerRequestPtr newRequest(new PlayerRequest(myGame, tPlayer, since, time(NULL), conn));
+				PlayerRequestPtr newRequest(new PlayerRequest(myGame, tPlayer));
 				// add to connection
 				conn->setPlayerRequest(newRequest);
 				
 				// send actions if there are already new actions
-				if (!sendActions(conn)) {
+				if (!sendActions(conn, since)) {
 					// put player into waiting list and send actions later when they occur
 					myGame->requestsWaiting.insert(conn);
 				}				
@@ -175,8 +175,8 @@ void Server::sendToWaiting(GamePtr game) {
 		// send new actions
 		sendActions(*rIter);
 	}
-	// remove everything from waiting list
-	game->requestsWaiting.clear();
+	
+	game->finishNotification();
 }
 
 // handles requests from the remote 7stroem server
@@ -212,16 +212,16 @@ bool Server::handleServerRequest(connectionPtr conn) {
 }
 
 // send actions to players in waiting list
-bool Server::sendActions(connectionPtr conn) {
+bool Server::sendActions(connectionPtr conn, int start) {
 	PlayerRequestPtr request = conn->getPlayerRequest();
 	
 	pair<vector<Action*>, int> actions;
-	actions.second = request->since;
+	actions.second = start;
 	
 	// get all actions since given event number
 	request->game->getActionsSince(&actions);
 	// no new actions ?
-	if (actions.second - request->since < 1) {
+	if (actions.first.size() < 1) {
 		// stop here - request gets on waiting list
 		return false;
 	}
@@ -244,9 +244,6 @@ bool Server::sendActions(connectionPtr conn) {
 	
 	// send response to player
 	conn->respond(jsonResponse);
-	
-	// mark this player's client as disconnected
-	request->player->setDisconnected();
 	
 	return true;
 	

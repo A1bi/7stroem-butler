@@ -67,6 +67,7 @@ class Game : public boost::enable_shared_from_this<Game> {
 		return host;
 	}
 	void kill();
+	void finishNotification();
 	
 	private:
 	// contains id of game
@@ -81,6 +82,7 @@ class Game : public boost::enable_shared_from_this<Game> {
 	PlayerPtr lastWinner;
 	// actions list
 	vector<Action*> actions;
+	int lastNotified;
 	// array containing the whole card deck
 	vector<Card*> allCards;
 	int rounds, turns, knocks, cardsLaid;

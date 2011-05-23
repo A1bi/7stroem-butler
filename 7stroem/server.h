@@ -19,10 +19,9 @@ using namespace std;
 typedef map<int, GamePtr> mGame;
 
 struct PlayerRequest : public boost::enable_shared_from_this<PlayerRequest> {
-	int since, time;
 	GamePtr const game;
 	PlayerPtr const player;
-	PlayerRequest(GamePtr g, PlayerPtr p, int si, int t, connectionPtr c): game(g), player(p), since(si), time(t) {}
+	PlayerRequest(GamePtr g, PlayerPtr p): game(g), player(p) {}
 };
 
 class Server {
@@ -56,7 +55,7 @@ private:
     void handleAccept();
 	void handlePlayerRequest(connectionPtr);
 	bool handleServerRequest(connectionPtr);
-	bool sendActions(connectionPtr);
+	bool sendActions(connectionPtr, int = -1);
 	void sendError(connectionPtr, string, string = "");
 	bool createGame(int, int);
 	bool registerWithServer();
