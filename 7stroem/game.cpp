@@ -449,13 +449,13 @@ bool Game::registerAction(PlayerPtr tPlayer, string action, string content) {
 	// blind knock
 	} else if (action == "blindKnock") {
 		const int blindKnocks = atoi(content.c_str());
-		if (blindKnocks < 1) {
+		if (blindKnocks < 2) {
 			throw ActionExcept("too few knocks");
 		} else if (blindKnocked) {
 			throw ActionExcept("someone has already knocked blindly");
 		} else {
 			tPlayer->blindKnock(blindKnocks);
-			knock(tPlayer, blindKnocks);
+			knock(tPlayer, blindKnocks-1);
 			blindKnocked = true;
 			notifyAction("blindKnocked", tPlayer, blindKnocks);
 			notifyTurn(true);

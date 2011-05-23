@@ -108,8 +108,8 @@ bool Player::knock(const int knocks) {
 		throw ActionExcept("you have to call another player's knock before you can knock again");
 	} else if (strikes > 5) {
 		throw ActionExcept("you cannot knock when you are poor");
-	} else if (strikes+calls+knocks > 7) {
-		throw ActionExcept("you cannot exceed seven strikes");
+	} else if (strikes+calls+knocks > ((knocks > 1) ? 8 : 7)) {
+		throw ActionExcept("you have too many strikes for this action");
 	}
 	// also increase calls because he obviously has to call his own knock
 	knockPossible = false;
