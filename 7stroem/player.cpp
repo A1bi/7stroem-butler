@@ -174,14 +174,19 @@ void Player::setDisconnected() {
 		// player is not connected anymore
 		// he has now 15 seconds to reconnect or this timer will remove him from the game
 		timerDisconnect.expires_from_now(boost::posix_time::seconds(15));
-		timerDisconnect.async_wait(boost::bind(&Player::quit, this, boost::asio::placeholders::error));
+		timerDisconnect.async_wait(boost::bind(&Player::handleDisconnect, this, boost::asio::placeholders::error));
 	}
 }
 
-void Player::quit(const boost::system::error_code& error) {
+void Player::handleDisconnect(const boost::system::error_code& error) {
 	if (error) return;
 	
-	std::cout << "player disconnected" << std::endl;
+	std::cout << "player disconnected (timeout)" << std::endl;
+	quit();
+}
+
+void Player::quit() {
+	std::cout << "player disconnected (wanted)" << std::endl;
 	quitted = true;
 	game->removePlayer(PlayerId);
 }

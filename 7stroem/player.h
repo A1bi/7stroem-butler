@@ -41,6 +41,7 @@ class Player {
 	void getHand(string[4]);
 	void flipHand();
 	int cardsOnStack();
+	void quit();
 	bool hasFolded() {
 		return folded;
 	}
@@ -64,7 +65,7 @@ class Player {
 	int connected;
 	boost::asio::deadline_timer timerDisconnect;
 	
-	void quit(const boost::system::error_code&);
+	void handleDisconnect(const boost::system::error_code&);
 	void incStrikes(int newStrikes);
 
 };

@@ -53,7 +53,7 @@ void Connection::close(const bool shutdown) {
 }
 
 // respond with a JSON object
-void Connection::respond(boost::shared_ptr<JSONobject> response) {
+void Connection::respond(JSONoPtr response) {
 	respond(response->str());
 }
 
@@ -79,7 +79,7 @@ void Connection::timeout(const boost::system::error_code& error) {
 	
 	// prepare a json with just a "timeout" as a result
 	// "timeout" tells the client to reconnect
-	boost::shared_ptr<JSONobject> response(new JSONobject);
+	JSONoPtr response(new JSONobject);
 	response->addChild("result", "timeout");
 	
 	respond(response);

@@ -21,7 +21,7 @@ void WebAPI::makeRequest(JSONobject* jsonRequest, string action, boost::function
 	request->send();
 }
 
-boost::shared_ptr<JSONobject> WebAPI::makeSyncRequest(JSONobject* jsonRequest, string action) {
+JSONoPtr WebAPI::makeSyncRequest(JSONobject* jsonRequest, string action) {
 	HTTPrequestPtr httpRequest = prepareHTTPrequest(jsonRequest, action);
 	
 	// create new request, send it and process response now
@@ -31,7 +31,7 @@ boost::shared_ptr<JSONobject> WebAPI::makeSyncRequest(JSONobject* jsonRequest, s
 	// parse json object
 	string body;
 	httpResponse->getBody(&body);
-	return boost::shared_ptr<JSONobject>(new JSONobject(body));
+	return JSONoPtr(new JSONobject(body));
 }
 
 HTTPrequestPtr WebAPI::prepareHTTPrequest(JSONobject* jsonRequest, string action) {

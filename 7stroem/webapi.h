@@ -63,7 +63,7 @@ class WebAPI {
 		rIter = resolver.resolve(query);
 	}
 	void makeRequest(JSONobject*, string, boost::function<void()>);
-	boost::shared_ptr<JSONobject> makeSyncRequest(JSONobject*, string);
+	JSONoPtr makeSyncRequest(JSONobject*, string);
 	void removeRequest(requestPtr);
 	
 	private:

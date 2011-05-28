@@ -40,7 +40,7 @@ class Connection : public boost::enable_shared_from_this<Connection> {
 		playerRequest = request;
 	}
 	void respond(string);
-	void respond(boost::shared_ptr<JSONobject>);
+	void respond(JSONoPtr);
 	void handleWrite();
 	void timeout(const boost::system::error_code&);
 	

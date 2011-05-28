@@ -59,6 +59,7 @@ private:
 	void sendError(connectionPtr, string, string = "");
 	bool createGame(int, int);
 	bool registerWithServer();
+	JSONoPtr getOkResponse();
 	
 };
 

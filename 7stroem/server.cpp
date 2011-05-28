@@ -110,9 +110,7 @@ void Server::handlePlayerRequest(connectionPtr conn) {
 			// player performed an action
 			} else if (gameRequest == "registerAction" || gameRequest == "registerHostAction") {
 				// success
-				boost::shared_ptr<JSONobject> jsonResponse(new JSONobject);
-				// prepare json response and add to body
-				jsonResponse->addChild("result", "ok");
+				JSONoPtr jsonResponse = getOkResponse();
 				
 				if (gameRequest == "registerAction") {
 					// register action
@@ -145,6 +143,11 @@ void Server::handlePlayerRequest(connectionPtr conn) {
 				conn->respond(jsonResponse);
 				
 				
+			// player quit
+			} else if (gameRequest == "quit") {
+				tPlayer->quit();
+				conn->respond(getOkResponse());
+			
 			// unknown request -> close
 			} else {
 				throw "unknown request";
@@ -227,8 +230,7 @@ bool Server::sendActions(connectionPtr conn, int start) {
 	}
 	
 	// prepare response
-	boost::shared_ptr<JSONobject> jsonResponse(new JSONobject);
-	jsonResponse->addChild("result", "ok");
+	JSONoPtr jsonResponse = getOkResponse();
 	JSONarray* actionsArray = jsonResponse->addArray("actions");
 	
 	// go through all actions
@@ -262,7 +264,7 @@ bool Server::createGame(int gameId, int host) {
 // register this server with the webserver and retrieve the authcode the webserver will later use to authenticate with this server
 bool Server::registerWithServer() {
 	JSONobject json;
-	boost::shared_ptr<JSONobject> response = wAPI.makeSyncRequest(&json, "registerServer");
+	JSONoPtr response = wAPI.makeSyncRequest(&json, "registerServer");
 	if (response->getChild("result") == "ok") {
 		authcode = response->getChild("authcode");
 		return true;
@@ -270,11 +272,21 @@ bool Server::registerWithServer() {
 	return false;
 }
 
+// just send a response saying that the request was successfully executed
+JSONoPtr Server::getOkResponse() {
+	// create json response
+	JSONoPtr jsonResponse(new JSONobject);
+	// add okay child
+	jsonResponse->addChild("result", "ok");
+	
+	return jsonResponse;
+}
+
 // send error back to player
 void Server::sendError(connectionPtr conn, string msg, string id) {
 	
 	// success
-	boost::shared_ptr<JSONobject> jsonResponse(new JSONobject);
+	JSONoPtr jsonResponse(new JSONobject);
 	// prepare json response and add to body
 	jsonResponse->addChild("result", "error");
 	JSONobject* error = jsonResponse->addObject("error");
