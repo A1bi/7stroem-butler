@@ -29,7 +29,7 @@ class Connection : public boost::enable_shared_from_this<Connection> {
 	void read();
 	void handleRead(const boost::system::error_code&, std::size_t);
 	void handleClose(const boost::system::error_code&);
-	void close(const bool = true);
+	void close();
 	HTTPrequestPtr getHttpRequest() {
 		return httpRequest;
 	}

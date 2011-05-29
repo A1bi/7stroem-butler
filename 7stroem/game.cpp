@@ -177,7 +177,7 @@ void Game::endSmallRound() {
 // adds player to players list
 bool Game::addPlayer(int playerId, string authcode) {
 	// check if player not yet added
-	if (getPlayer(playerId) != NULL) {
+	if (getPlayer(playerId) != PlayerPtr()) {
 		return false;
 	}
 	// create pointer to new Player object

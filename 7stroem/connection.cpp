@@ -26,7 +26,7 @@ void Connection::handleRead(const boost::system::error_code& error, std::size_t 
 	
 	// connection closed
 	} else {
-		close(false);
+		close();
 	}
 }
 
@@ -34,18 +34,14 @@ void Connection::handleRead(const boost::system::error_code& error, std::size_t 
 void Connection::handleClose(const boost::system::error_code& error) {
 	if (error != boost::asio::error::operation_aborted && !closed) {
 		cout << "connection closed" << endl;
-		close(false);
+		close();
 	}
 }
 
 // shuts down the socket and closes the connection
-void Connection::close(const bool shutdown) {
+void Connection::close() {
 	if (closed) return;
 	closed = true;
-	
-	if (shutdown) {
-		//socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both);
-	}
 	
 	socket.close();
 	// let the server remove this connection from list
@@ -63,13 +59,16 @@ void Connection::respond(string msg) {
 	HTTPresponse response;
 	response << msg;
 	
+	// cancel async_read which detects closed connections
+	socket.shutdown(boost::asio::ip::tcp::socket::shutdown_receive);
+	
 	// send response
 	boost::asio::async_write(socket, boost::asio::buffer(response.getAll()), boost::bind(&Connection::handleWrite, this));
 }
 
 // function to call after response was sent to the client
 void Connection::handleWrite() {
-	close(true);
+	close();
 }
 
 // function is called by a timer
