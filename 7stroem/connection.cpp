@@ -60,7 +60,10 @@ void Connection::respond(string msg) {
 	response << msg;
 	
 	// cancel async_read which detects closed connections
-	socket.shutdown(boost::asio::ip::tcp::socket::shutdown_receive);
+	// only try it because socket may not be connected anymore
+	try {
+		socket.shutdown(boost::asio::ip::tcp::socket::shutdown_receive);
+	} catch (...) {}
 	
 	// send response
 	boost::asio::async_write(socket, boost::asio::buffer(response.getAll()), boost::bind(&Connection::handleWrite, this));

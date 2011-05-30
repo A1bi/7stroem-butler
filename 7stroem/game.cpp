@@ -250,6 +250,7 @@ void Game::removePlayer(int id) {
 				cout << "kleine runde beendet" << endl;
 				endSmallRound();
 			} else if (newTurn) {
+				checkTurnCycle();
 				notifyTurn();
 			}
 		}
@@ -396,50 +397,19 @@ bool Game::registerAction(PlayerPtr tPlayer, string action, string content) {
 		if (tPlayer->layStack(lCard)) {
 			notifyAction("laidStack", tPlayer, lCard->getCardId());
 			nextTurn();
-			bool newTurn = true;
-			// small round complete ?
-			cardsLaid++;
-			if (cardsLaid >= playersSmallRound.size()) {
-				cardsLaid = 0;
-				// check who won
-				vPlayer::iterator pIter;
-				for (pIter = playersSmallRound.begin(); pIter != playersSmallRound.end(); ++pIter) {
-					if (*pIter == lastWinner) continue;
-					// now two things have to be done to determine the winner of this small round
-					// first: check if last winner has folded (rare case) -> player only has to have the correct suit
-					// second: check if suit is equal to last winner and also number is higher
-					if (((lastWinner->hasFolded() || lastWinner->hasQuit()) && !lastWinner->lastStack()->cmpSuitTo(lCard)) || 
-						(*(*pIter)->lastStack()) > (*lastWinner->lastStack())) {
-						lastWinner = *pIter;
-						// it's now the player's turn who has won
-						turn = pIter;
-					}
-				}
-				// if the last winner is still the player who folded just choose the next player clockwise as winner
-				if (lastWinner->hasFolded()) {
-					// since turn is now the player next the player who folded we can set him as last winner
-					lastWinner = *turn;
-				}
-				// last turn of small round
-				if (turns == 4) {
-					// check which players have to get strikes
-					for (pIter = playersSmallRound.begin(); pIter != playersSmallRound.end(); ++pIter) {
-						if (*pIter != lastWinner) {
-							// player is not the winner -> he obviously lost
-							(*pIter)->lose();
-						}
-					}
-					endSmallRound();
-					newTurn = false;
-				} else {
-					// next turn
-					turns++;
-				}
 			
+			// now two things have to be done to determine if this is the highest card
+			// first: check if last winner has folded (rare case) -> player only has to have the correct suit
+			// second: check if suit is equal to last winner and also number is higher
+			if (tPlayer != lastWinner &&
+				(((lastWinner->hasFolded() || lastWinner->hasQuit()) && !lastWinner->lastStack()->cmpSuitTo(lCard)) || 
+				*lCard > (*lastWinner->lastStack()))) {
+				lastWinner = tPlayer;
 			}
-			if (newTurn) {
-				notifyTurn();
-			}
+			
+			checkTurnCycle();
+			notifyTurn();
+			
 			return true;
 		}
 
@@ -494,6 +464,45 @@ bool Game::registerAction(PlayerPtr tPlayer, string action, string content) {
 	// not executed -> may not be permitted or possible
 	throw ActionExcept("unknown error");
 	return false;
+	
+}
+
+void Game::checkTurnCycle() {
+	
+	// small round complete ?
+	cardsLaid++;
+	if (cardsLaid >= playersSmallRound.size()) {
+		cardsLaid = 0;
+
+		vPlayer::iterator pIter;
+		
+		// if the last winner is still the player who folded just choose the next player clockwise as winner
+		if (lastWinner->hasFolded()) {
+			// since turn is now the player next the player who folded we can set him as last winner
+			lastWinner = *turn;
+		}
+		
+		// check who has won this small round
+		for (pIter = playersSmallRound.begin(); pIter != playersSmallRound.end(); ++pIter) {
+			if (*pIter == lastWinner) {
+				// it's now the player's turn who has won
+				turn = pIter;
+				// end of small round ?
+			} else if (turns == 4) {
+				// is not last winner -> has lost -> strike him
+				(*pIter)->lose();
+			}
+		}
+		
+		// end of small round ?
+		if (turns == 4) {
+			endSmallRound();
+		} else {
+			// next turn
+			turns++;
+		}
+		
+	}
 	
 }
 

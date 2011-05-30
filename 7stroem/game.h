@@ -106,6 +106,7 @@ class Game : public boost::enable_shared_from_this<Game> {
 	bool removePlayerFromList(vPlayer&, PlayerPtr, vPlayer::iterator* = NULL);
 	void removeFromKnock(PlayerPtr = PlayerPtr());
 	void killQuitPlayers(vpPlayer::iterator* = NULL);
+	void checkTurnCycle();
 	
 };
 
