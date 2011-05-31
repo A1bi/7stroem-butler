@@ -33,7 +33,6 @@ void Connection::handleRead(const boost::system::error_code& error, std::size_t 
 // is called after the request was already read -> must be a closed connection now
 void Connection::handleClose(const boost::system::error_code& error) {
 	if (error != boost::asio::error::operation_aborted && !closed) {
-		cout << "connection closed" << endl;
 		close();
 	}
 }

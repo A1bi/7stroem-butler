@@ -1,6 +1,4 @@
-#include <iostream>
 #include <boost/bind.hpp>
-using namespace std;
 
 #include "player.h"
 #include "game.h"
@@ -181,12 +179,10 @@ void Player::setDisconnected() {
 void Player::handleDisconnect(const boost::system::error_code& error) {
 	if (error) return;
 	
-	std::cout << "player disconnected (timeout)" << std::endl;
 	quit();
 }
 
 void Player::quit() {
-	std::cout << "player disconnected (wanted)" << std::endl;
 	quitted = true;
 	game->removePlayer(PlayerId);
 }

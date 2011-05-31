@@ -2,7 +2,6 @@
 #ifndef _SERVER_H_
 #define _SERVER_H_
 
-#include <iostream>
 #include <string>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>

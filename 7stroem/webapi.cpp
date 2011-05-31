@@ -1,6 +1,5 @@
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
-#include <iostream>
 using namespace std;
 
 #include "webapi.h"
@@ -71,7 +70,6 @@ void WebAPIrequest::handleWrite(const boost::system::error_code& error) {
 }
 
 void WebAPIrequest::handleRead(const boost::system::error_code& error) {
-	cout << &buffer << endl;
 	close(error);
 }
 
