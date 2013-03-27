@@ -1,0 +1,12 @@
+# OS X
+.DS_Store
+profile
+
+# Xcode
+build/*
+*.pbxuser
+*.perspective
+*.perspectivev3
+*.mode1v3
+*.mode2v3
+xcuserdata
